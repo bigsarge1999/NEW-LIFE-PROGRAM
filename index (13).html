@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#101310;
+    --panel:#171b16;
+    --panel-2:#1d2219;
+    --line:#2a3126;
+    --green:#4c8a55;
+    --green-bright:#6bb873;
+    --amber:#d9a441;
+    --red:#c1594a;
+    --text:#e9e7de;
+    --text-dim:#9aa294;
+    --text-faint:#5f6a5a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(76,138,85,0.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto;}
+
+  /* ---- header ---- */
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-bottom:22px; flex-wrap:wrap; gap:14px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .dot{
+    width:11px; height:11px; border-radius:50%;
+    background:var(--green-bright);
+    box-shadow:0 0 10px var(--green-bright);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-weight:700;
+    font-size:22px; letter-spacing:0.02em;
+  }
+  .sub{color:var(--text-dim); font-size:12.5px; margin-top:2px;}
+  .clock{
+    font-family:'JetBrains Mono', monospace;
+    text-align:right;
+  }
+  .clock .time{font-size:26px; font-weight:700; color:var(--green-bright); letter-spacing:0.03em;}
+  .clock .date{font-size:12px; color:var(--text-dim); margin-top:2px;}
+
+  .authbar{
+    font-size:11px; color:var(--text-faint); text-align:right; margin-top:6px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .authbar span{color:var(--green-bright);}
+
+  /* ---- grid ---- */
+  .grid{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:18px;
+  }
+  @media (max-width:860px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 18px 16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--green), transparent 70%);
+  }
+  .panel-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px;
+  }
+  .panel-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12.5px; font-weight:600; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--text-dim);
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .idx{color:var(--green-bright); font-family:'JetBrains Mono', monospace;}
+  .count-pill{
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    color:var(--text-dim); background:var(--panel-2);
+    border:1px solid var(--line); border-radius:20px; padding:2px 9px;
+  }
+
+  /* ---- tasks ---- */
+  .add-row{display:flex; gap:8px; margin-bottom:12px;}
+  input[type=text], textarea, select{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:7px; padding:9px 11px; font-family:'Inter',sans-serif; font-size:13.5px;
+    width:100%; outline:none;
+  }
+  input[type=text]:focus, textarea:focus{border-color:var(--green);}
+  button{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:13px;
+    border:none; border-radius:7px; cursor:pointer;
+    padding:9px 14px;
+    background:var(--green); color:#0d120c;
+    transition:transform .08s ease, background .15s ease;
+  }
+  button:hover{background:var(--green-bright);}
+  button:active{transform:scale(0.96);}
+  button.ghost{
+    background:transparent; border:1px solid var(--line); color:var(--text-dim);
+  }
+  button.ghost:hover{border-color:var(--green); color:var(--green-bright);}
+  button.icon{padding:8px 10px; font-size:14px;}
+
+  .task-list{list-style:none; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto;}
+  .task{
+    display:flex; align-items:center; gap:10px;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:7px; padding:9px 10px;
+  }
+  .task.done{opacity:0.45;}
+  .task.done .task-text{text-decoration:line-through;}
+  .checkbox{
+    width:18px; height:18px; border-radius:5px; border:1.5px solid var(--text-faint);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;
+    font-size:12px; color:var(--bg);
+  }
+  .checkbox.on{background:var(--green-bright); border-color:var(--green-bright);}
+  .task-text{flex:1; font-size:13.5px;}
+  .task-del{color:var(--text-faint); cursor:pointer; font-size:15px; padding:0 4px;}
+  .task-del:hover{color:var(--red);}
+  .empty{color:var(--text-faint); font-size:12.5px; font-style:italic; padding:14px 4px;}
+
+  /* ---- habits ---- */
+  .habit-row{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 4px; border-bottom:1px solid var(--line);
+  }
+  .habit-row:last-child{border-bottom:none;}
+  .habit-name{flex:1; font-size:13.5px;}
+  .habit-streak{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber);
+    min-width:44px; text-align:right;
+  }
+  .lights{display:flex; gap:4px;}
+  .light{
+    width:15px; height:15px; border-radius:4px; border:1px solid var(--line);
+    background:var(--panel-2); cursor:pointer;
+  }
+  .light.on{background:var(--green-bright); border-color:var(--green-bright); box-shadow:0 0 6px rgba(107,184,115,0.6);}
+  .habit-del{color:var(--text-faint); cursor:pointer; font-size:15px;}
+  .habit-del:hover{color:var(--red);}
+
+  /* ---- focus timer ---- */
+  .timer-wrap{display:flex; flex-direction:column; align-items:center; padding:10px 0 4px;}
+  .timer-display{
+    font-family:'JetBrains Mono', monospace; font-size:52px; font-weight:700;
+    letter-spacing:0.03em; color:var(--text);
+    margin:6px 0 14px;
+  }
+  .timer-display.running{color:var(--green-bright);}
+  .ring-note{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.12em; font-family:'Space Grotesk',sans-serif;}
+  .timer-controls{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; justify-content:center;}
+  .mode-select{display:flex; gap:6px; margin-top:16px;}
+  .mode-btn{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text-dim);
+    padding:6px 12px; border-radius:20px; font-size:11.5px; cursor:pointer; font-weight:600;
+  }
+  .mode-btn.active{background:var(--green); color:#0d120c; border-color:var(--green);}
+  .session-count{font-size:11px; color:var(--text-faint); margin-top:10px; font-family:'JetBrains Mono',monospace;}
+
+  /* ---- brain dump ---- */
+  textarea{min-height:280px; resize:vertical; line-height:1.55; font-size:13.5px;}
+  .dump-foot{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .save-state{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono', monospace;}
+  .save-state.saved{color:var(--green-bright);}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px;}
+
+  .vehicle-chip{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:20px;
+    padding:6px 8px 6px 14px; font-size:12.5px; font-weight:600;
+  }
+  .vehicle-chip.selected{border-color:var(--green-bright); color:var(--green-bright);}
+  .vehicle-chip .veh-del{
+    color:var(--text-faint); cursor:pointer; font-size:13px;
+    width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+  }
+  .vehicle-chip .veh-del:hover{color:var(--red); background:rgba(193,89,74,0.12);}
+
+  .veh-form{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+  .veh-form input{flex:1; min-width:110px;}
+  .veh-form input.veh-name{min-width:160px; flex:1.4;}
+  .vehicle-chip .veh-sub{color:var(--text-faint); font-weight:400; font-size:11px;}
+  .veh-detail{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:12px 14px; margin-top:10px; font-size:12.5px; color:var(--text-dim);
+    display:flex; flex-wrap:wrap; gap:14px;
+  }
+  .veh-detail b{color:var(--text);}
+
+  .stat-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:10px; margin-bottom:16px;}
+  .stat-card{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:12px 14px;
+  }
+  .stat-card .label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-faint); font-family:'Space Grotesk',sans-serif;}
+  .stat-card .value{font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; color:var(--green-bright); margin-top:4px;}
+  .chart-box{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:14px; margin-bottom:16px;
+  }
+  .chart-box h3{font-size:11.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); font-family:'Space Grotesk',sans-serif; margin-bottom:10px;}
+  .chart-box canvas{max-height:260px;}
+
+  .med-row{
+    display:flex; flex-direction:column; gap:8px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:7px;
+    padding:11px 12px; margin-bottom:6px;
+  }
+  .med-row-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .med-name{font-size:14px; font-weight:600;}
+  .med-sub{color:var(--text-faint); font-size:12px; margin-top:2px;}
+  .med-pillcount{
+    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--amber);
+    cursor:pointer; white-space:nowrap;
+  }
+  .med-pillcount.low{color:var(--red);}
+  .med-times{display:flex; flex-wrap:wrap; gap:6px;}
+  .med-time-chip{
+    display:flex; align-items:center; gap:6px;
+    border:1px solid var(--line); border-radius:20px; padding:5px 10px 5px 12px;
+    font-size:12px; background:var(--panel);
+  }
+  .med-time-chip.taken{border-color:var(--green-bright); color:var(--green-bright);}
+  .med-time-chip button{padding:3px 9px; font-size:11px; border-radius:14px;}
+
+  .stat-card{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:12px 14px;
+  }
+  .stat-card .stat-label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-faint);}
+  .stat-card .stat-value{font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; color:var(--green-bright); margin-top:4px;}
+  table td{padding:7px 8px; border-bottom:1px solid var(--line); color:var(--text-dim);}
+  table tbody tr:last-child td{border-bottom:none;}
+
+  /* ---- tabs ---- */
+  .tabbar{
+    display:flex; gap:6px; flex-wrap:wrap;
+    margin-bottom:20px; border-bottom:1px solid var(--line);
+    padding-bottom:0;
+  }
+  .tab-btn{
+    background:transparent; border:none; cursor:pointer;
+    color:var(--text-dim);
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    padding:11px 16px 12px;
+    border-bottom:2px solid transparent;
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:-1px;
+  }
+  .tab-btn .idx{color:var(--text-faint); font-family:'JetBrains Mono', monospace; font-size:11px;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--green-bright); border-bottom-color:var(--green-bright);}
+  .tab-btn.active .idx{color:var(--green-bright);}
+  .tab-pane{display:none;}
+  .tab-pane.active{display:block; animation:fadeIn .18s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  @media (max-width:640px){
+    .tab-btn{padding:9px 11px 10px; font-size:11.5px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <h1>CONTROL BOARD</h1>
+        <div class="sub">Daily operations — tasks, habits, focus, notes</div>
+      </div>
+    </div>
+    <div>
+      <div class="clock">
+        <div class="time" id="clockTime">--:--</div>
+        <div class="date" id="clockDate">-</div>
+      </div>
+      <div class="authbar">SYNC: <span id="authState">connecting…</span></div>
+    </div>
+  </header>
+
+  <div class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-tab="tasks"><span class="idx">01</span> Tasks</button>
+    <button class="tab-btn" data-tab="habits"><span class="idx">02</span> Habits</button>
+    <button class="tab-btn" data-tab="focus"><span class="idx">03</span> Focus Timer</button>
+    <button class="tab-btn" data-tab="notes"><span class="idx">04</span> Brain Dump</button>
+    <button class="tab-btn" data-tab="calendar"><span class="idx">05</span> Calendar</button>
+    <button class="tab-btn" data-tab="fuel"><span class="idx">06</span> Fuel</button>
+    <button class="tab-btn" data-tab="reports"><span class="idx">07</span> Reports</button>
+    <button class="tab-btn" data-tab="meds"><span class="idx">08</span> Meds</button>
+  </div>
+
+  <!-- TASKS -->
+  <div class="tab-pane active" id="pane-tasks">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">01</span> Today's Tasks</div>
+        <div class="count-pill" id="taskCount">0 open</div>
+      </div>
+      <div class="add-row">
+        <input type="text" id="taskInput" placeholder="Add a task and hit enter…">
+        <button id="taskAddBtn">Add</button>
+      </div>
+      <ul class="task-list" id="taskList"></ul>
+    </div>
+  </div>
+
+  <!-- HABITS -->
+  <div class="tab-pane" id="pane-habits">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">02</span> Habit Tracker</div>
+        <div class="count-pill" id="habitDayLabel">today</div>
+      </div>
+      <div class="add-row">
+        <input type="text" id="habitInput" placeholder="Add a habit or routine…">
+        <button id="habitAddBtn">Add</button>
+      </div>
+      <div id="habitList"></div>
+    </div>
+  </div>
+
+  <!-- FOCUS TIMER -->
+  <div class="tab-pane" id="pane-focus">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">03</span> Focus Timer</div>
+        <div class="count-pill" id="timerStateLabel">idle</div>
+      </div>
+      <div class="timer-wrap">
+        <div class="ring-note" id="timerModeLabel">FOCUS SESSION</div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="timer-controls">
+          <button id="timerStartBtn">Start</button>
+          <button class="ghost" id="timerPauseBtn">Pause</button>
+          <button class="ghost" id="timerResetBtn">Reset</button>
+        </div>
+        <div class="mode-select">
+          <div class="mode-btn active" data-min="25" data-label="FOCUS SESSION">25 min</div>
+          <div class="mode-btn" data-min="5" data-label="SHORT BREAK">5 min</div>
+          <div class="mode-btn" data-min="15" data-label="LONG BREAK">15 min</div>
+        </div>
+        <div class="session-count" id="sessionCount">0 sessions completed today</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRAIN DUMP -->
+  <div class="tab-pane" id="pane-notes">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">04</span> Brain Dump</div>
+        <div class="count-pill">notes</div>
+      </div>
+      <textarea id="dumpArea" placeholder="Dump whatever's rattling around up there. Saves automatically."></textarea>
+      <div class="dump-foot">
+        <div class="save-state" id="dumpSaveState">not saved yet</div>
+        <button class="ghost" id="dumpClearBtn">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="tab-pane" id="pane-calendar">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">05</span> Road Calendar</div>
+        <a href="calendar.html" target="_blank" rel="noopener" class="count-pill" style="text-decoration:none;">open full view ↗</a>
+      </div>
+      <iframe
+        src="calendar.html"
+        title="Road Calendar"
+        style="width:100%; height:640px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2);"
+        loading="lazy">
+      </iframe>
+    </div>
+  </div>
+
+  <!-- FUEL -->
+  <div class="tab-pane" id="pane-fuel">
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">06</span> Vehicles</div>
+        <div class="count-pill" id="vehicleCount">0</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="vehicleInput" placeholder="Nickname (e.g. F650, personal truck)" style="flex:2; min-width:160px;">
+        <input type="text" id="vehicleYear" placeholder="Year" inputmode="numeric" style="flex:1; min-width:80px;">
+        <input type="text" id="vehicleMake" placeholder="Make" style="flex:1; min-width:100px;">
+        <input type="text" id="vehicleModel" placeholder="Model" style="flex:1; min-width:100px;">
+        <input type="text" id="vehiclePlate" placeholder="Plate (optional)" style="flex:1; min-width:100px;">
+        <select id="vehicleType" style="flex:1; min-width:120px;">
+          <option value="truck">Truck</option>
+          <option value="trailer">Trailer</option>
+          <option value="personal">Personal</option>
+          <option value="other">Other</option>
+        </select>
+        <button id="vehicleAddBtn">Add</button>
+      </div>
+      <div id="vehicleChips" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Gas Mileage Log</div>
+        <div class="count-pill" id="fuelAvgMpg">avg — mpg</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <select id="fuelVehicleSelect" style="flex:1; min-width:150px;"></select>
+        <input type="text" id="fuelMiles" placeholder="Miles driven" inputmode="decimal" style="flex:1; min-width:110px;">
+        <input type="text" id="fuelGallons" placeholder="Gallons" inputmode="decimal" style="flex:1; min-width:110px;">
+        <input type="text" id="fuelCost" placeholder="Total cost ($, optional)" inputmode="decimal" style="flex:1; min-width:140px;">
+        <button id="fuelAddBtn">Log fill-up</button>
+      </div>
+      <ul class="task-list" id="fuelList" style="max-height:400px;"></ul>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="tab-pane" id="pane-reports">
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">07</span> Fleet Summary</div>
+      </div>
+      <div id="reportStats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px;"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title">MPG Over Time</div>
+      </div>
+      <canvas id="mpgChart" height="220"></canvas>
+    </div>
+
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title">Avg MPG by Vehicle</div>
+      </div>
+      <canvas id="vehicleMpgChart" height="200"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Vehicle Breakdown</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="text-align:left; color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.06em;">
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">Vehicle</th>
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">Fill-ups</th>
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">Miles</th>
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">Gallons</th>
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">Avg MPG</th>
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">Total Cost</th>
+              <th style="padding:6px 8px; border-bottom:1px solid var(--line);">$/Mile</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDS -->
+  <div class="tab-pane" id="pane-meds">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">08</span> Medications</div>
+        <div class="count-pill" id="medCount">0 today</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="medName" placeholder="Medication name" style="flex:1.4; min-width:150px;">
+        <input type="text" id="medDose" placeholder="Dose (e.g. 20 mg)" style="flex:1; min-width:110px;">
+        <input type="number" id="medPillCount" placeholder="Pills on hand" min="0" style="flex:1; min-width:110px;">
+      </div>
+      <div id="medTimesRow" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <input type="time" class="med-time-input" style="flex:1; min-width:110px;">
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <button class="ghost" id="medAddTimeBtn" type="button">+ Add another time</button>
+        <button id="medAddBtn" style="flex:1; min-width:160px;">Add medication</button>
+      </div>
+      <ul class="task-list" id="medList" style="max-height:460px; margin-top:8px;"></ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc,
+  onSnapshot, serverTimestamp, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ============================================================
+   1) PASTE YOUR FIREBASE CONFIG HERE
+   Firebase console -> Project settings -> General -> Your apps -> SDK config
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let uid = null;
+const authStateEl = document.getElementById('authState');
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    uid = user.uid;
+    authStateEl.textContent = "connected";
+    startAllListeners();
+  } else {
+    signInAnonymously(auth).catch(err => {
+      authStateEl.textContent = "offline (check Firebase config)";
+      console.error(err);
+    });
+  }
+});
+signInAnonymously(auth).catch(err => {
+  authStateEl.textContent = "offline (check Firebase config)";
+  console.error(err);
+});
+
+/* ---------------- clock ---------------- */
+function tickClock(){
+  const now = new Date();
+  document.getElementById('clockTime').textContent =
+    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('clockDate').textContent =
+    now.toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'});
+}
+tickClock();
+setInterval(tickClock, 1000 * 10);
+
+function todayKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ============================================================
+   TASKS
+   ============================================================ */
+const taskList = document.getElementById('taskList');
+const taskInput = document.getElementById('taskInput');
+const taskCount = document.getElementById('taskCount');
+
+function tasksCol(){ return collection(db, 'users', uid, 'tasks'); }
+
+function renderTasks(items){
+  taskList.innerHTML = '';
+  if(!items.length){
+    taskList.innerHTML = '<div class="empty">No tasks yet. Add one above.</div>';
+  }
+  let open = 0;
+  items.forEach(t => {
+    if(!t.done) open++;
+    const li = document.createElement('li');
+    li.className = 'task' + (t.done ? ' done' : '');
+    li.innerHTML = `
+      <div class="checkbox ${t.done ? 'on' : ''}">${t.done ? '✓' : ''}</div>
+      <div class="task-text"></div>
+      <div class="task-del">✕</div>
+    `;
+    li.querySelector('.task-text').textContent = t.text;
+    li.querySelector('.checkbox').onclick = () => updateDoc(doc(db,'users',uid,'tasks',t.id), {done: !t.done});
+    li.querySelector('.task-del').onclick = () => deleteDoc(doc(db,'users',uid,'tasks',t.id));
+    taskList.appendChild(li);
+  });
+  taskCount.textContent = `${open} open`;
+}
+
+function addTask(){
+  const val = taskInput.value.trim();
+  if(!val) return;
+  addDoc(tasksCol(), {text: val, done:false, created: serverTimestamp()});
+  taskInput.value = '';
+}
+document.getElementById('taskAddBtn').onclick = addTask;
+taskInput.addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
+
+/* ============================================================
+   HABITS
+   ============================================================ */
+const habitList = document.getElementById('habitList');
+const habitInput = document.getElementById('habitInput');
+document.getElementById('habitDayLabel').textContent = new Date().toLocaleDateString([], {weekday:'short'});
+
+function habitsCol(){ return collection(db, 'users', uid, 'habits'); }
+
+function renderHabits(items){
+  habitList.innerHTML = '';
+  if(!items.length){
+    habitList.innerHTML = '<div class="empty">No habits yet. Add a daily routine above.</div>';
+    return;
+  }
+  const tKey = todayKey();
+  items.forEach(h => {
+    const log = h.log || {};
+    const doneToday = !!log[tKey];
+    const streak = calcStreak(log);
+    const row = document.createElement('div');
+    row.className = 'habit-row';
+    row.innerHTML = `
+      <div class="light ${doneToday ? 'on' : ''}"></div>
+      <div class="habit-name"></div>
+      <div class="habit-streak">${streak} day${streak===1?'':'s'}</div>
+      <div class="habit-del">✕</div>
+    `;
+    row.querySelector('.habit-name').textContent = h.name;
+    row.querySelector('.light').onclick = () => {
+      const newLog = {...log, [tKey]: !doneToday};
+      updateDoc(doc(db,'users',uid,'habits',h.id), {log:newLog});
+    };
+    row.querySelector('.habit-del').onclick = () => deleteDoc(doc(db,'users',uid,'habits',h.id));
+    habitList.appendChild(row);
+  });
+}
+
+function calcStreak(log){
+  let streak = 0;
+  let d = new Date();
+  while(true){
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(log[key]){ streak++; d.setDate(d.getDate()-1); } else { break; }
+  }
+  return streak;
+}
+
+function addHabit(){
+  const val = habitInput.value.trim();
+  if(!val) return;
+  addDoc(habitsCol(), {name: val, log:{}, created: serverTimestamp()});
+  habitInput.value = '';
+}
+document.getElementById('habitAddBtn').onclick = addHabit;
+habitInput.addEventListener('keydown', e => { if(e.key === 'Enter') addHabit(); });
+
+/* ============================================================
+   FOCUS TIMER  (local only — resets on reload by design)
+   ============================================================ */
+let timerMinutes = 25;
+let secondsLeft = timerMinutes * 60;
+let timerInterval = null;
+let sessionsToday = 0;
+
+const timerDisplay = document.getElementById('timerDisplay');
+const timerStateLabel = document.getElementById('timerStateLabel');
+const timerModeLabel = document.getElementById('timerModeLabel');
+const sessionCountEl = document.getElementById('sessionCount');
+
+function renderTimer(){
+  const m = Math.floor(secondsLeft/60).toString().padStart(2,'0');
+  const s = (secondsLeft%60).toString().padStart(2,'0');
+  timerDisplay.textContent = `${m}:${s}`;
+}
+renderTimer();
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    timerMinutes = parseInt(btn.dataset.min);
+    timerModeLabel.textContent = btn.dataset.label;
+    clearInterval(timerInterval);
+    timerInterval = null;
+    secondsLeft = timerMinutes * 60;
+    timerDisplay.classList.remove('running');
+    timerStateLabel.textContent = 'idle';
+    renderTimer();
+  };
+});
+
+document.getElementById('timerStartBtn').onclick = () => {
+  if(timerInterval) return;
+  timerDisplay.classList.add('running');
+  timerStateLabel.textContent = 'running';
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    if(secondsLeft <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      secondsLeft = 0;
+      timerDisplay.classList.remove('running');
+      timerStateLabel.textContent = 'done';
+      sessionsToday++;
+      sessionCountEl.textContent = `${sessionsToday} session${sessionsToday===1?'':'s'} completed today`;
+      try{ new AudioContext(); }catch(e){}
+    }
+    renderTimer();
+  }, 1000);
+};
+document.getElementById('timerPauseBtn').onclick = () => {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerDisplay.classList.remove('running');
+  timerStateLabel.textContent = 'paused';
+};
+document.getElementById('timerResetBtn').onclick = () => {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  secondsLeft = timerMinutes * 60;
+  timerDisplay.classList.remove('running');
+  timerStateLabel.textContent = 'idle';
+  renderTimer();
+};
+
+/* ============================================================
+   BRAIN DUMP
+   ============================================================ */
+const dumpArea = document.getElementById('dumpArea');
+const dumpSaveState = document.getElementById('dumpSaveState');
+let dumpSaveTimeout = null;
+
+function dumpDoc(){ return doc(db, 'users', uid, 'notes', 'braindump'); }
+
+dumpArea.addEventListener('input', () => {
+  dumpSaveState.textContent = 'saving…';
+  dumpSaveState.classList.remove('saved');
+  clearTimeout(dumpSaveTimeout);
+  dumpSaveTimeout = setTimeout(() => {
+    setDoc(dumpDoc(), {text: dumpArea.value, updated: serverTimestamp()})
+      .then(() => {
+        dumpSaveState.textContent = 'saved';
+        dumpSaveState.classList.add('saved');
+      });
+  }, 700);
+});
+
+document.getElementById('dumpClearBtn').onclick = () => {
+  if(!confirm('Clear all notes?')) return;
+  dumpArea.value = '';
+  setDoc(dumpDoc(), {text:'', updated: serverTimestamp()});
+  dumpSaveState.textContent = 'saved';
+  dumpSaveState.classList.add('saved');
+};
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================================================
+   VEHICLES
+   ============================================================ */
+const vehicleChips = document.getElementById('vehicleChips');
+const vehicleInput = document.getElementById('vehicleInput');
+const vehicleCount = document.getElementById('vehicleCount');
+const fuelVehicleSelect = document.getElementById('fuelVehicleSelect');
+
+function vehiclesCol(){ return collection(db, 'users', uid, 'vehicles'); }
+
+let currentVehicles = [];
+let selectedVehicleId = null;
+let latestFuelEntries = [];
+
+function renderVehicles(items){
+  currentVehicles = items;
+  vehicleCount.textContent = items.length;
+
+  if(items.length && !items.find(v => v.id === selectedVehicleId)){
+    selectedVehicleId = items[0].id;
+  }
+  if(!items.length) selectedVehicleId = null;
+
+  vehicleChips.innerHTML = '';
+  if(!items.length){
+    vehicleChips.innerHTML = '<div class="empty">No vehicles yet — add one above to start logging fuel.</div>';
+  }
+  items.forEach(v => {
+    const chip = document.createElement('div');
+    chip.className = 'vehicle-chip' + (v.id === selectedVehicleId ? ' selected' : '');
+    const details = [v.year, v.make, v.model].filter(Boolean).join(' ');
+    const plateStr = v.plate ? ` · ${v.plate}` : '';
+    chip.innerHTML = `
+      <span class="veh-info" style="cursor:pointer;">
+        <span class="veh-name" style="display:block;"></span>
+        <span class="veh-details" style="display:block; font-weight:400; font-size:11px; color:var(--text-faint);"></span>
+      </span>
+      <span class="veh-del">✕</span>`;
+    chip.querySelector('.veh-name').textContent = v.name;
+    chip.querySelector('.veh-details').textContent = (details || v.type || '') + plateStr;
+    chip.querySelector('.veh-info').onclick = () => {
+      selectedVehicleId = v.id;
+      renderVehicles(currentVehicles);
+      renderFuel(latestFuelEntries);
+    };
+    chip.querySelector('.veh-del').onclick = () => {
+      if(!confirm(`Remove "${v.name}"? Its logged fill-ups stay in your data but won't show a vehicle name.`)) return;
+      deleteDoc(doc(db,'users',uid,'vehicles',v.id));
+    };
+    vehicleChips.appendChild(chip);
+  });
+
+  fuelVehicleSelect.innerHTML = '';
+  items.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = v.name;
+    if(v.id === selectedVehicleId) opt.selected = true;
+    fuelVehicleSelect.appendChild(opt);
+  });
+  if(!items.length){
+    const opt = document.createElement('option');
+    opt.textContent = 'Add a vehicle first';
+    fuelVehicleSelect.appendChild(opt);
+  }
+}
+
+const vehicleYearInput = document.getElementById('vehicleYear');
+const vehicleMakeInput = document.getElementById('vehicleMake');
+const vehicleModelInput = document.getElementById('vehicleModel');
+const vehiclePlateInput = document.getElementById('vehiclePlate');
+const vehicleTypeInput = document.getElementById('vehicleType');
+
+function addVehicle(){
+  const val = vehicleInput.value.trim();
+  if(!val) return;
+  const entry = {
+    name: val,
+    year: vehicleYearInput.value.trim(),
+    make: vehicleMakeInput.value.trim(),
+    model: vehicleModelInput.value.trim(),
+    plate: vehiclePlateInput.value.trim(),
+    type: vehicleTypeInput.value,
+    created: serverTimestamp()
+  };
+  addDoc(vehiclesCol(), entry);
+  vehicleInput.value = '';
+  vehicleYearInput.value = '';
+  vehicleMakeInput.value = '';
+  vehicleModelInput.value = '';
+  vehiclePlateInput.value = '';
+}
+document.getElementById('vehicleAddBtn').onclick = addVehicle;
+vehicleInput.addEventListener('keydown', e => { if(e.key === 'Enter') addVehicle(); });
+
+fuelVehicleSelect.addEventListener('change', () => {
+  selectedVehicleId = fuelVehicleSelect.value;
+  renderVehicles(currentVehicles);
+  renderFuel(latestFuelEntries);
+});
+
+/* ============================================================
+   FUEL / GAS MILEAGE TRACKER
+   ============================================================ */
+const fuelList = document.getElementById('fuelList');
+const fuelMilesInput = document.getElementById('fuelMiles');
+const fuelGallonsInput = document.getElementById('fuelGallons');
+const fuelCostInput = document.getElementById('fuelCost');
+const fuelAvgMpg = document.getElementById('fuelAvgMpg');
+
+function fuelCol(){ return collection(db, 'users', uid, 'fuel'); }
+
+function vehicleName(vehicleId){
+  const v = currentVehicles.find(v => v.id === vehicleId);
+  return v ? v.name : 'Unknown vehicle';
+}
+
+function renderFuel(allItems){
+  latestFuelEntries = allItems;
+  const items = selectedVehicleId ? allItems.filter(f => f.vehicleId === selectedVehicleId) : allItems;
+
+  fuelList.innerHTML = '';
+  if(!items.length){
+    fuelList.innerHTML = '<div class="empty">No fill-ups logged for this vehicle yet.</div>';
+    fuelAvgMpg.textContent = 'avg — mpg';
+    return;
+  }
+  let totalMiles = 0, totalGallons = 0;
+  items.forEach(f => { totalMiles += f.miles; totalGallons += f.gallons; });
+  const avg = totalGallons > 0 ? (totalMiles / totalGallons) : 0;
+  fuelAvgMpg.textContent = `avg ${avg.toFixed(1)} mpg`;
+
+  items.slice().reverse().forEach(f => {
+    const mpg = f.gallons > 0 ? (f.miles / f.gallons) : 0;
+    const li = document.createElement('li');
+    li.className = 'task';
+    const dateStr = f.created && f.created.toDate ? f.created.toDate().toLocaleDateString([], {month:'short', day:'numeric'}) : '';
+    const costStr = f.cost ? ` · $${f.cost.toFixed(2)}` : '';
+    li.innerHTML = `
+      <div class="task-text"><strong style="color:var(--green-bright);">${mpg.toFixed(1)} mpg</strong> — ${f.miles} mi / ${f.gallons} gal${costStr} <span style="color:var(--text-faint);">${vehicleName(f.vehicleId)} · ${dateStr}</span></div>
+      <div class="task-del">✕</div>
+    `;
+    li.querySelector('.task-del').onclick = () => deleteDoc(doc(db,'users',uid,'fuel',f.id));
+    fuelList.appendChild(li);
+  });
+}
+
+function addFuel(){
+  if(!selectedVehicleId){
+    alert('Add a vehicle first.');
+    return;
+  }
+  const miles = parseFloat(fuelMilesInput.value);
+  const gallons = parseFloat(fuelGallonsInput.value);
+  const cost = parseFloat(fuelCostInput.value);
+  if(!miles || !gallons || miles <= 0 || gallons <= 0){
+    alert('Enter miles driven and gallons at minimum.');
+    return;
+  }
+  const entry = { miles, gallons, vehicleId: selectedVehicleId, created: serverTimestamp() };
+  if(!isNaN(cost) && cost > 0) entry.cost = cost;
+  addDoc(fuelCol(), entry);
+  fuelMilesInput.value = '';
+  fuelGallonsInput.value = '';
+  fuelCostInput.value = '';
+}
+document.getElementById('fuelAddBtn').onclick = addFuel;
+[fuelMilesInput, fuelGallonsInput, fuelCostInput].forEach(el => {
+  el.addEventListener('keydown', e => { if(e.key === 'Enter') addFuel(); });
+});
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+let mpgChartInstance = null;
+let vehicleMpgChartInstance = null;
+
+const chartColors = ['#6bb873','#d9a441','#7aa7c9','#c1594a','#b98ad9','#5fb3a8'];
+
+function renderReports(){
+  const vehicles = currentVehicles;
+  const fuel = latestFuelEntries;
+
+  // ---- summary stats ----
+  let totalMiles = 0, totalGallons = 0, totalCost = 0;
+  fuel.forEach(f => {
+    totalMiles += f.miles || 0;
+    totalGallons += f.gallons || 0;
+    totalCost += f.cost || 0;
+  });
+  const overallAvg = totalGallons > 0 ? totalMiles / totalGallons : 0;
+  const costPerMile = totalMiles > 0 ? totalCost / totalMiles : 0;
+
+  const statsEl = document.getElementById('reportStats');
+  statsEl.innerHTML = '';
+  const stats = [
+    ['Total Miles', totalMiles.toLocaleString()],
+    ['Total Gallons', totalGallons.toFixed(1)],
+    ['Overall Avg MPG', overallAvg.toFixed(1)],
+    ['Total Fuel Cost', totalCost > 0 ? `$${totalCost.toFixed(2)}` : '—'],
+    ['Cost / Mile', costPerMile > 0 ? `$${costPerMile.toFixed(2)}` : '—'],
+    ['Vehicles', vehicles.length],
+    ['Fill-ups Logged', fuel.length]
+  ];
+  stats.forEach(([label, value]) => {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.innerHTML = `<div class="label"></div><div class="value"></div>`;
+    card.querySelector('.label').textContent = label;
+    card.querySelector('.value').textContent = value;
+    statsEl.appendChild(card);
+  });
+
+  // ---- per-vehicle breakdown ----
+  const tbody = document.getElementById('reportTableBody');
+  tbody.innerHTML = '';
+  if(!vehicles.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:12px 8px; color:var(--text-faint); font-style:italic;">No vehicles yet.</td></tr>';
+  }
+  const vehicleStats = vehicles.map(v => {
+    const entries = fuel.filter(f => f.vehicleId === v.id);
+    const miles = entries.reduce((s,f) => s + (f.miles||0), 0);
+    const gallons = entries.reduce((s,f) => s + (f.gallons||0), 0);
+    const cost = entries.reduce((s,f) => s + (f.cost||0), 0);
+    const avgMpg = gallons > 0 ? miles/gallons : 0;
+    const cpm = miles > 0 ? cost/miles : 0;
+    return {v, entries, miles, gallons, cost, avgMpg, cpm};
+  });
+  vehicleStats.forEach(vs => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--text);font-weight:600;"></td>
+      <td></td><td></td><td></td><td></td><td></td><td></td>
+    `;
+    const cells = tr.querySelectorAll('td');
+    cells[0].textContent = vs.v.name;
+    cells[1].textContent = vs.entries.length;
+    cells[2].textContent = vs.miles.toLocaleString();
+    cells[3].textContent = vs.gallons.toFixed(1);
+    cells[4].textContent = vs.avgMpg > 0 ? vs.avgMpg.toFixed(1) : '—';
+    cells[5].textContent = vs.cost > 0 ? `$${vs.cost.toFixed(2)}` : '—';
+    cells[6].textContent = vs.cpm > 0 ? `$${vs.cpm.toFixed(2)}` : '—';
+    tbody.appendChild(tr);
+  });
+
+  // ---- charts (only if Chart.js loaded) ----
+  if(typeof Chart === 'undefined') return;
+
+  const gridColor = 'rgba(255,255,255,0.06)';
+  const tickColor = '#9aa294';
+
+  // MPG over time — one line per vehicle
+  const mpgCtx = document.getElementById('mpgChart');
+  const datasets = vehicleStats.filter(vs => vs.entries.length).map((vs, i) => {
+    const sorted = vs.entries.slice().sort((a,b) => {
+      const ta = a.created && a.created.toMillis ? a.created.toMillis() : 0;
+      const tb = b.created && b.created.toMillis ? b.created.toMillis() : 0;
+      return ta - tb;
+    });
+    return {
+      label: vs.v.name,
+      data: sorted.map(f => f.gallons > 0 ? +(f.miles/f.gallons).toFixed(2) : 0),
+      borderColor: chartColors[i % chartColors.length],
+      backgroundColor: chartColors[i % chartColors.length],
+      tension: 0.3,
+      pointRadius: 3
+    };
+  });
+  const maxLen = Math.max(0, ...datasets.map(d => d.data.length));
+  const labels = Array.from({length:maxLen}, (_,i) => `#${i+1}`);
+
+  if(mpgChartInstance) mpgChartInstance.destroy();
+  mpgChartInstance = new Chart(mpgCtx, {
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ labels:{ color: tickColor } } },
+      scales:{
+        x:{ grid:{ color: gridColor }, ticks:{ color: tickColor } },
+        y:{ grid:{ color: gridColor }, ticks:{ color: tickColor }, title:{display:true, text:'MPG', color:tickColor} }
+      }
+    }
+  });
+
+  // Avg MPG by vehicle — bar chart
+  const barCtx = document.getElementById('vehicleMpgChart');
+  if(vehicleMpgChartInstance) vehicleMpgChartInstance.destroy();
+  vehicleMpgChartInstance = new Chart(barCtx, {
+    type:'bar',
+    data:{
+      labels: vehicleStats.map(vs => vs.v.name),
+      datasets:[{
+        label:'Avg MPG',
+        data: vehicleStats.map(vs => +vs.avgMpg.toFixed(2)),
+        backgroundColor: vehicleStats.map((_,i) => chartColors[i % chartColors.length])
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ color: tickColor } },
+        y:{ grid:{ color: gridColor }, ticks:{ color: tickColor }, title:{display:true, text:'MPG', color:tickColor} }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   MEDICATIONS
+   ============================================================ */
+const medList = document.getElementById('medList');
+const medNameInput = document.getElementById('medName');
+const medDoseInput = document.getElementById('medDose');
+const medPillCountInput = document.getElementById('medPillCount');
+const medTimesRow = document.getElementById('medTimesRow');
+const medCount = document.getElementById('medCount');
+
+document.getElementById('medAddTimeBtn').onclick = () => {
+  const input = document.createElement('input');
+  input.type = 'time';
+  input.className = 'med-time-input';
+  input.style.flex = '1';
+  input.style.minWidth = '110px';
+  medTimesRow.appendChild(input);
+};
+
+function medsCol(){ return collection(db, 'users', uid, 'medications'); }
+function medDosesCol(){ return collection(db, 'users', uid, 'medDoses'); }
+function todayKeyMeds(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatMedTime(t){
+  if(!t) return 'No time set';
+  const [h,m] = t.split(':').map(Number);
+  const hour12 = ((h + 11) % 12) + 1;
+  return `${hour12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+function medTimes(m){
+  if(Array.isArray(m.times) && m.times.length) return m.times;
+  if(m.time) return [m.time];
+  return [''];
+}
+
+let currentMeds = [];
+let currentMedDoses = {};
+
+function renderMeds(){
+  let plannedToday = 0, takenToday = 0;
+  currentMeds.forEach(m => {
+    medTimes(m).forEach(t => {
+      plannedToday++;
+      const dkey = todayKeyMeds() + '_' + m.id + '_' + t;
+      if(currentMedDoses[dkey]?.taken) takenToday++;
+    });
+  });
+  medCount.textContent = `${takenToday}/${plannedToday} today`;
+
+  medList.innerHTML = '';
+  if(!currentMeds.length){
+    medList.innerHTML = '<div class="empty">No medications yet. Add one above.</div>';
+    return;
+  }
+  currentMeds.slice().sort((a,b) => a.name.localeCompare(b.name)).forEach(m => {
+    const pillCount = (typeof m.pillCount === 'number') ? m.pillCount : null;
+    const row = document.createElement('div');
+    row.className = 'med-row';
+
+    const pillCountHtml = pillCount !== null
+      ? `<span class="med-pillcount ${pillCount <= 5 ? 'low' : ''}" title="Click to update count">${pillCount} on hand</span>`
+      : `<span class="med-pillcount" title="Click to set pill count">set count</span>`;
+
+    row.innerHTML = `
+      <div class="med-row-top">
+        <div>
+          <div class="med-name"></div>
+          <div class="med-sub"></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          ${pillCountHtml}
+          <div class="task-del">✕</div>
+        </div>
+      </div>
+      <div class="med-times"></div>
+    `;
+    row.querySelector('.med-name').textContent = m.name;
+    row.querySelector('.med-sub').textContent = m.dose || 'Dose not set';
+
+    row.querySelector('.med-pillcount').onclick = () => {
+      const val = prompt(`Set pill count on hand for ${m.name}:`, pillCount !== null ? pillCount : '');
+      if(val === null) return;
+      const n = parseInt(val);
+      if(isNaN(n) || n < 0) return;
+      updateDoc(doc(db,'users',uid,'medications',m.id), {pillCount: n});
+    };
+    row.querySelector('.task-del').onclick = () => {
+      if(!confirm(`Delete ${m.name}?`)) return;
+      deleteDoc(doc(db,'users',uid,'medications',m.id));
+    };
+
+    const timesEl = row.querySelector('.med-times');
+    medTimes(m).forEach(t => {
+      const dkey = todayKeyMeds() + '_' + m.id + '_' + t;
+      const taken = !!currentMedDoses[dkey]?.taken;
+      const chip = document.createElement('div');
+      chip.className = 'med-time-chip' + (taken ? ' taken' : '');
+      chip.innerHTML = `<span></span><button>${taken ? '✓ Taken' : 'Mark taken'}</button>`;
+      chip.querySelector('span').textContent = formatMedTime(t);
+      chip.querySelector('button').onclick = () => {
+        setDoc(doc(db,'users',uid,'medDoses',dkey), { taken: !taken, medId: m.id, date: todayKeyMeds(), time: t });
+        currentMedDoses[dkey] = { taken: !taken };
+        if(!taken && pillCount !== null && pillCount > 0){
+          updateDoc(doc(db,'users',uid,'medications',m.id), {pillCount: pillCount - 1});
+        } else if(taken && pillCount !== null){
+          updateDoc(doc(db,'users',uid,'medications',m.id), {pillCount: pillCount + 1});
+        }
+        renderMeds();
+      };
+      timesEl.appendChild(chip);
+    });
+
+    medList.appendChild(row);
+  });
+}
+
+function addMed(){
+  try{
+    const name = medNameInput.value.trim();
+    if(!name) return;
+    const times = Array.from(document.querySelectorAll('.med-time-input'))
+      .map(el => el.value)
+      .filter(Boolean);
+    const pillCountVal = medPillCountInput.value.trim();
+    const entry = {
+      name, dose: medDoseInput.value.trim(),
+      times: times.length ? times : [''],
+      created: serverTimestamp()
+    };
+    if(pillCountVal !== '') entry.pillCount = parseInt(pillCountVal) || 0;
+    addDoc(medsCol(), entry).catch(err => {
+      console.error('addMed failed:', err);
+      alert('Could not save medication: ' + err.message);
+    });
+    medNameInput.value = '';
+    medDoseInput.value = '';
+    medPillCountInput.value = '';
+    medTimesRow.innerHTML = '<input type="time" class="med-time-input" style="flex:1; min-width:110px;">';
+  }catch(err){
+    console.error('addMed error:', err);
+    alert('Something went wrong adding the medication: ' + err.message);
+  }
+}
+document.getElementById('medAddBtn').setAttribute('type','button');
+document.getElementById('medAddBtn').onclick = addMed;
+[medNameInput, medDoseInput, medPillCountInput].forEach(el => {
+  el.addEventListener('keydown', e => { if(e.key === 'Enter') addMed(); });
+});
+
+/* ============================================================
+   LISTENERS
+   ============================================================ */
+function startAllListeners(){
+  onSnapshot(query(tasksCol(), orderBy('created','asc')), snap => {
+    const items = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderTasks(items);
+  });
+
+  onSnapshot(habitsCol(), snap => {
+    const items = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderHabits(items);
+  });
+
+  onSnapshot(vehiclesCol(), snap => {
+    const items = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderVehicles(items);
+    renderFuel(latestFuelEntries);
+    renderReports();
+  });
+
+  onSnapshot(query(fuelCol(), orderBy('created','asc')), snap => {
+    const items = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderFuel(items);
+    renderReports();
+  });
+
+  onSnapshot(medsCol(), snap => {
+    currentMeds = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderMeds();
+  });
+
+  onSnapshot(medDosesCol(), snap => {
+    currentMedDoses = {};
+    snap.docs.forEach(d => { currentMedDoses[d.id] = d.data(); });
+    renderMeds();
+  });
+
+  getDoc(dumpDoc()).then(snap => {
+    if(snap.exists()){
+      dumpArea.value = snap.data().text || '';
+      dumpSaveState.textContent = 'saved';
+      dumpSaveState.classList.add('saved');
+    }
+  });
+}
+</script>
+</body>
+</html>

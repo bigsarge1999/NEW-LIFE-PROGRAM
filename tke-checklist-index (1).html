@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TKR Prep — Field Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #171f13;
+    --bg-2: #131a10;
+    --panel: #212b1a;
+    --panel-2: #283420;
+    --line: #3d4a30;
+    --line-soft: #2c3623;
+    --brass: #c9a24a;
+    --brass-dim: #9c8146;
+    --moss: #8faa5e;
+    --moss-dim: #6d8548;
+    --rust: #b5573a;
+    --text: #ece6d4;
+    --text-dim: #a7a68d;
+    --text-faint: #6e7360;
+    --radius: 3px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at top, rgba(143,170,94,0.06), transparent 55%);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  h1,h2,h3,.stencil{
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  ::selection{ background: var(--moss); color: #10160c; }
+
+  /* ---------- Lock screen ---------- */
+  #lock{
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-2);
+    z-index: 50;
+    padding: 24px;
+  }
+  .lock-card{
+    width: 100%; max-width: 340px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 32px 28px;
+    text-align: center;
+  }
+  .lock-tag{
+    display:inline-block;
+    font-family:'Oswald',sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--brass);
+    border: 1px solid var(--brass-dim);
+    padding: 4px 10px;
+    margin-bottom: 18px;
+  }
+  .lock-card h1{ font-size: 22px; color: var(--text); margin-bottom: 6px; }
+  .lock-sub{ color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+  #pinInput{
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: 'Oswald', sans-serif;
+    font-size: 30px;
+    letter-spacing: 0.5em;
+    text-align: center;
+    padding: 14px 0 14px 0.5em;
+    border-radius: var(--radius);
+    outline: none;
+  }
+  #pinInput:focus{ border-color: var(--moss); }
+  .lock-btn{
+    margin-top: 18px;
+    width: 100%;
+    background: var(--moss-dim);
+    color: #10160c;
+    border: none;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 13px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .lock-btn:hover{ background: var(--moss); }
+  .lock-msg{ margin-top: 14px; font-size: 13px; color: var(--rust); min-height: 18px; }
+  .lock-setup-note{ margin-top: 16px; font-size: 12px; color: var(--text-faint); line-height: 1.5; }
+
+  /* ---------- App shell ---------- */
+  #app{ display:none; max-width: 720px; margin: 0 auto; padding: 28px 18px 80px; }
+  header.top{
+    border-bottom: 2px solid var(--brass-dim);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+  }
+  .eyebrow{
+    font-size: 12px;
+    color: var(--brass);
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+  header.top h1{ font-size: 30px; color: var(--text); }
+  header.top .sub{ color: var(--text-dim); font-size: 15px; margin-top: 4px; }
+
+  .id-row{
+    display:flex; flex-wrap: wrap; gap: 14px;
+    margin-top: 20px;
+  }
+  .id-field{ flex: 1 1 200px; }
+  .id-field label{
+    display:block; font-size: 11px; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;
+  }
+  .id-field input{
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 9px 10px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  .id-field input:focus{ border-color: var(--moss); }
+
+  .sync-bar{
+    display:flex; align-items:center; gap:8px;
+    margin-top: 16px; font-size: 12px; color: var(--text-faint);
+  }
+  .sync-dot{ width:7px; height:7px; border-radius:50%; background: var(--text-faint); }
+  .sync-dot.ok{ background: var(--moss); }
+  .sync-dot.busy{ background: var(--brass); }
+
+  .progress-wrap{
+    margin-top: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    height: 8px;
+    overflow: hidden;
+  }
+  .progress-fill{
+    height: 100%;
+    background: var(--moss-dim);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-label{ font-size: 12px; color: var(--text-faint); margin-top: 6px; }
+
+  section.block{
+    border: 1px solid var(--line-soft);
+    background: var(--panel);
+    margin-bottom: 16px;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .block-head{
+    display:flex; align-items: baseline; gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--panel-2);
+  }
+  .block-num{
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    color: var(--brass);
+    border: 1px solid var(--brass-dim);
+    padding: 1px 7px;
+    flex-shrink: 0;
+  }
+  .block-head h2{ font-size: 16px; color: var(--text); }
+  .block-note{
+    padding: 12px 18px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+  .block-body{ padding: 6px 18px 14px; }
+
+  .subgroup-title{
+    font-family:'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin: 14px 0 6px;
+  }
+
+  .item{ padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .item:last-child{ border-bottom: none; }
+  .item-row{ display:flex; align-items:flex-start; gap: 10px; }
+  .cbx{
+    appearance: none; -webkit-appearance: none;
+    width: 19px; height: 19px; flex-shrink:0;
+    border: 1.5px solid var(--line);
+    border-radius: 2px;
+    background: var(--bg);
+    margin-top: 2px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s ease;
+  }
+  .cbx:hover{ border-color: var(--moss); }
+  .cbx:checked{ background: var(--moss-dim); border-color: var(--moss); }
+  .cbx:checked::after{
+    content: '';
+    position: absolute; left: 5px; top: 1px;
+    width: 5px; height: 10px;
+    border: solid #10160c;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .item-label{ font-size: 14.5px; color: var(--text); flex: 1; cursor: pointer; }
+  .item.done .item-label{ color: var(--text-faint); text-decoration: line-through; text-decoration-color: var(--text-faint); }
+
+  .answer-field{
+    width: 100%;
+    margin-top: 8px;
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 8px 10px;
+    resize: vertical;
+    min-height: 38px;
+    outline: none;
+  }
+  .answer-field:focus{ border-color: var(--moss); }
+  .answer-field::placeholder{ color: var(--text-faint); }
+
+  .contact-row{
+    display:flex; gap: 10px; align-items:center;
+    padding: 8px 0; border-bottom: 1px solid var(--line-soft);
+  }
+  .contact-row:last-child{ border-bottom: none; }
+  .contact-role{ flex: 0 0 44%; font-size: 13.5px; color: var(--text-dim); }
+  .contact-input{
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    color: var(--text);
+    padding: 7px 9px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 13.5px;
+    outline: none;
+  }
+  .contact-input:focus{ border-color: var(--moss); }
+
+  #notesArea{
+    width: 100%;
+    min-height: 180px;
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 12px;
+    outline: none;
+    resize: vertical;
+  }
+  #notesArea:focus{ border-color: var(--moss); }
+
+  footer.foot{
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line-soft);
+    color: var(--text-faint);
+    font-size: 12px;
+    display:flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .link-btn{
+    background: none; border: 1px solid var(--line);
+    color: var(--text-dim);
+    font-family: inherit; font-size: 12px;
+    padding: 6px 12px; border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .link-btn:hover{ border-color: var(--moss); color: var(--text); }
+
+  @media (max-width: 480px){
+    .contact-row{ flex-direction: column; align-items: stretch; gap: 5px; }
+    .contact-role{ flex: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div class="lock-card">
+    <span class="lock-tag">Access</span>
+    <h1 id="lockTitle">Enter Code</h1>
+    <p class="lock-sub" id="lockSub">4-digit code to open the checklist</p>
+    <input id="pinInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="----">
+    <button class="lock-btn" id="lockBtn">Unlock</button>
+    <p class="lock-msg" id="lockMsg"></p>
+  </div>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div class="eyebrow">Total Knee Replacement</div>
+    <h1>Prep Field Checklist</h1>
+    <div class="sub">Synced across every device — check items off anywhere, they update everywhere.</div>
+
+    <div class="id-row">
+      <div class="id-field">
+        <label>Veteran</label>
+        <input type="text" id="f_veteran" placeholder="Name">
+      </div>
+      <div class="id-field">
+        <label>Surgery Date</label>
+        <input type="text" id="f_date" placeholder="MM/DD/YYYY">
+      </div>
+      <div class="id-field">
+        <label>Facility</label>
+        <input type="text" id="f_facility" placeholder="VA / Community Care site">
+      </div>
+    </div>
+
+    <div class="sync-bar">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Connecting…</span>
+    </div>
+
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 of 0 items checked</div>
+  </header>
+
+  <div id="sections"></div>
+
+  <section class="block" id="notesBlock">
+    <div class="block-head">
+      <span class="block-num">14</span>
+      <h2>Appointment Notes</h2>
+    </div>
+    <div class="block-body" style="padding-top:12px;">
+      <textarea id="notesArea" placeholder="Doctor's answers, important dates, prescriptions, follow-up appointments, and anything else to remember..."></textarea>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Everything here saves automatically.</span>
+    <button class="link-btn" id="lockAgainBtn">Lock this device</button>
+  </footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+
+// ---- Firebase config ----
+const firebaseConfig = {
+  apiKey: "AIzaSyBHl3XE8F4HsIv-347Q-psQoTOGy7RHdjI",
+  authDomain: "lifes-good-4d55a.firebaseapp.com",
+  databaseURL: "https://lifes-good-4d55a-default-rtdb.firebaseio.com",
+  projectId: "lifes-good-4d55a",
+  storageBucket: "lifes-good-4d55a.firebasestorage.app",
+  messagingSenderId: "412337437135",
+  appId: "1:412337437135:web:f918f938050c93211ababa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const DOC_REF = doc(db, "tke-checklist", "shared");
+
+// ---- Content model ----
+const QA_SECTIONS = [
+  { title: "Top Priority Questions", items: [
+    ["p1","What are my personal risks based on my health history?"],
+    ["p2","What is the pain management plan after surgery?"],
+    ["p3","What equipment should I request from the VA now?"],
+    ["p4","Who should I call if I have problems after surgery?"],
+    ["p5","What is my expected recovery timeline?"],
+  ]},
+  { title: "Questions About the Surgery", items: [
+    ["s1","What implant/prosthesis will you use, and why is it right for me?"],
+    ["s2","How long will the surgery take?"],
+    ["s3","Are there any risks specific to my health history (age, weight, other conditions, medications)?"],
+    ["s4","Will I need to stop any medications (blood thinners, NSAIDs, supplements) before surgery, and when?"],
+    ["s5","Do I need medical clearance from my primary care doctor or cardiologist first?"],
+  ]},
+  { title: "Hospital Stay, Pain Control & PT", items: [
+    ["h1","Will this be inpatient or outpatient (same-day)?"],
+    ["h2","If inpatient, how many nights should I expect to stay?"],
+    ["h3","Who handles pain management after surgery, and what's the plan?"],
+    ["h4","When will I start practicing physical therapy?"],
+  ]},
+  { title: "Recovery Timeline & Restrictions", items: [
+    ["r1","How long until I can walk unassisted?"],
+    ["r2","How long until I can drive again?"],
+    ["r3","How long until I can climb stairs normally?"],
+    ["r4","When can I return to work (and does that depend on my job type)?"],
+    ["r5","How long is the full recovery, and when will I feel \u201cback to normal\u201d?"],
+    ["r6","What does physical therapy look like — how often, for how long?"],
+    ["r7","What restrictions will I have (kneeling, twisting, high-impact activity, driving)?"],
+  ]},
+  { title: "Complications & Warning Signs", items: [
+    ["c1","What symptoms should prompt an immediate call or ER visit (blood clot, infection signs)?"],
+    ["c2","What's the plan for blood clot prevention (compression devices, blood thinners)?"],
+    ["c3","How is infection risk managed, especially given VA wait times for follow-up care?"],
+  ]},
+  { title: "Medication Questions", items: [
+    ["m1","Which medications should I stop before surgery, and on what date?"],
+    ["m2","Should I stop vitamins, supplements, NSAIDs, or herbal products?"],
+    ["m3","Which medications should I take the morning of surgery?"],
+    ["m4","When should I restart medications after surgery?"],
+  ]},
+  { title: "Pain Management Plan", items: [
+    ["pm1","What's the specific pain medication plan — opioids, and for how long?"],
+    ["pm2","Are there non-opioid options (nerve blocks, non-narcotic protocols)?"],
+    ["pm3","What if the prescribed pain meds aren't enough — who do I call?"],
+  ]},
+  { title: "Blood / Anesthesia Specifics", items: [
+    ["b1","Will I need a blood transfusion, and should I bank my own blood beforehand?"],
+    ["b2","If spinal/regional anesthesia, how long until sensation/movement returns?"],
+    ["b3","Any bloodwork or EKG needed before clearance?"],
+  ]},
+  { title: "VA-Specific Questions", items: [
+    ["v1","Will this surgery be done at the VA or through Community Care?"],
+    ["v2","Who is my point of contact for scheduling PT, equipment, and follow-ups?"],
+    ["v3","Is there a VA nurse case manager or care coordinator assigned to me?"],
+    ["v4","Will the VA provide transportation to/from surgery and follow-ups?"],
+    ["v5","Does Veteran Directed Care / Home Health Aide apply if I need in-home help?"],
+  ]},
+  { title: "Home Preparation & Logistics", items: [
+    ["hp1","Will home health or VA nursing visits be arranged, or do I request that?"],
+    ["hp2","Should I sleep on the main floor if my bedroom is upstairs?"],
+  ]},
+];
+
+const CHECK_SECTIONS = [
+  { title: "Before Surgery Checklist", items: [
+    ["bc1","Confirm surgery date, arrival time, and location"],
+    ["bc2","Confirm when to stop eating and drinking before surgery"],
+    ["bc3","Confirm medication stop and restart dates"],
+    ["bc4","Prepare sleeping area, bathroom access, and commonly used items"],
+    ["bc5","Remove loose rugs, cords, clutter, and other tripping hazards"],
+    ["bc6","Pick up prescriptions and confirm VA equipment delivery or pickup"],
+  ]},
+  { title: "Home Safety Checklist", items: [
+    ["hs1","Clear walking paths for a walker or cane"],
+    ["hs2","Add night lights or brighter lighting in hallways and bathrooms"],
+    ["hs3","Keep pets away from walking paths during early recovery"],
+    ["hs4","Place frequently used items at waist height to avoid bending or reaching"],
+    ["hs5","Check shower, toilet, and stair safety before surgery day"],
+  ]},
+];
+
+const EQUIPMENT_SECTION = {
+  title: "Equipment to Request from the VA (Prosthetics Dept.)",
+  note: "Ask your doctor to submit a Prosthetics consult — the VA department that issues durable medical equipment. Submit well before surgery; turnaround can take time.",
+  groups: [
+    ["Mobility", [
+      ["eq1","Walker (standard or front-wheeled)"],
+      ["eq2","Cane (once you progress off the walker)"],
+      ["eq3","Wheelchair (temporary, for longer distances)"],
+    ]],
+    ["Bathroom Safety", [
+      ["eq4","Raised toilet seat or commode chair"],
+      ["eq5","Shower chair or bench"],
+      ["eq6","Grab bars (toilet and shower)"],
+      ["eq7","Non-slip bath mat"],
+    ]],
+    ["Bed / Mobility Aids", [
+      ["eq8","Bed rail or bed assist handle"],
+      ["eq9","Leg lifter / strap"],
+    ]],
+    ["Daily Living Aids", [
+      ["eq10","Reacher/grabber tool"],
+      ["eq11","Sock aid and long-handled shoehorn"],
+      ["eq12","Dressing stick"],
+    ]],
+    ["Ice / Swelling Management", [
+      ["eq13","Cold therapy unit (circulating ice machine)"],
+      ["eq14","Compression stockings"],
+    ]],
+    ["Exercise Equipment", [
+      ["eq15","CPM (continuous passive motion) machine — ask if needed"],
+      ["eq16","Resistance bands for home PT exercises"],
+    ]],
+  ]
+};
+
+const CONTACTS = [
+  ["ct1","Surgeon's office"],
+  ["ct2","VA primary care"],
+  ["ct3","VA prosthetics / DME department"],
+  ["ct4","Home health or PT contact"],
+  ["ct5","After-hours nurse line"],
+  ["ct6","Emergency symptoms — immediate care"],
+];
+
+// ---- State ----
+let state = { checks: {}, texts: {}, code: null };
+let suppressWrite = false;
+let writeTimer = null;
+
+const allCheckIds = [];
+QA_SECTIONS.forEach(sec => sec.items.forEach(([id]) => allCheckIds.push(id)));
+CHECK_SECTIONS.forEach(sec => sec.items.forEach(([id]) => allCheckIds.push(id)));
+EQUIPMENT_SECTION.groups.forEach(([,items]) => items.forEach(([id]) => allCheckIds.push(id)));
+
+// ---- Render ----
+const sectionsEl = document.getElementById("sections");
+let blockNum = 1;
+
+function renderQABlock(sec){
+  const block = document.createElement("section");
+  block.className = "block";
+  block.innerHTML = `
+    <div class="block-head"><span class="block-num">${String(blockNum++).padStart(2,'0')}</span><h2>${sec.title}</h2></div>
+    <div class="block-body"></div>`;
+  const body = block.querySelector(".block-body");
+  sec.items.forEach(([id, q]) => {
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <div class="item-row">
+        <input type="checkbox" class="cbx" data-check="${id}">
+        <label class="item-label" data-label="${id}">${q}</label>
+      </div>
+      <textarea class="answer-field" data-text="${id}" placeholder="Answer / notes..." rows="1"></textarea>`;
+    body.appendChild(item);
+  });
+  sectionsEl.appendChild(block);
+}
+
+function renderCheckBlock(sec){
+  const block = document.createElement("section");
+  block.className = "block";
+  block.innerHTML = `
+    <div class="block-head"><span class="block-num">${String(blockNum++).padStart(2,'0')}</span><h2>${sec.title}</h2></div>
+    <div class="block-body"></div>`;
+  const body = block.querySelector(".block-body");
+  sec.items.forEach(([id, label]) => {
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <div class="item-row">
+        <input type="checkbox" class="cbx" data-check="${id}">
+        <label class="item-label" data-label="${id}">${label}</label>
+      </div>`;
+    body.appendChild(item);
+  });
+  sectionsEl.appendChild(block);
+}
+
+function renderEquipmentBlock(sec){
+  const block = document.createElement("section");
+  block.className = "block";
+  block.innerHTML = `
+    <div class="block-head"><span class="block-num">${String(blockNum++).padStart(2,'0')}</span><h2>${sec.title}</h2></div>
+    <div class="block-note">${sec.note}</div>
+    <div class="block-body"></div>`;
+  const body = block.querySelector(".block-body");
+  sec.groups.forEach(([name, items]) => {
+    const t = document.createElement("div");
+    t.className = "subgroup-title";
+    t.textContent = name;
+    body.appendChild(t);
+    items.forEach(([id, label]) => {
+      const item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = `
+        <div class="item-row">
+          <input type="checkbox" class="cbx" data-check="${id}">
+          <label class="item-label" data-label="${id}">${label}</label>
+        </div>`;
+      body.appendChild(item);
+    });
+  });
+  sectionsEl.appendChild(block);
+}
+
+function renderContactsBlock(){
+  const block = document.createElement("section");
+  block.className = "block";
+  block.innerHTML = `
+    <div class="block-head"><span class="block-num">${String(blockNum++).padStart(2,'0')}</span><h2>Who to Call After Surgery</h2></div>
+    <div class="block-body"></div>`;
+  const body = block.querySelector(".block-body");
+  CONTACTS.forEach(([id, role]) => {
+    const row = document.createElement("div");
+    row.className = "contact-row";
+    row.innerHTML = `
+      <span class="contact-role">${role}</span>
+      <input type="text" class="contact-input" data-text="${id}" placeholder="Name / phone number">`;
+    body.appendChild(row);
+  });
+  sectionsEl.appendChild(block);
+}
+
+QA_SECTIONS.forEach(renderQABlock);
+CHECK_SECTIONS.forEach(renderCheckBlock);
+renderEquipmentBlock(EQUIPMENT_SECTION);
+renderContactsBlock();
+
+// ---- Wire inputs ----
+function updateItemDoneClass(id){
+  const cb = document.querySelector(`[data-check="${id}"]`);
+  const item = cb ? cb.closest(".item") : null;
+  if(item) item.classList.toggle("done", cb.checked);
+}
+
+function updateProgress(){
+  const total = allCheckIds.length;
+  const done = allCheckIds.filter(id => state.checks[id]).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressLabel").textContent = `${done} of ${total} items checked`;
+}
+
+function applyStateToDom(){
+  suppressWrite = true;
+  allCheckIds.forEach(id => {
+    const cb = document.querySelector(`[data-check="${id}"]`);
+    if(cb){ cb.checked = !!state.checks[id]; updateItemDoneClass(id); }
+  });
+  document.querySelectorAll("[data-text]").forEach(el => {
+    const id = el.getAttribute("data-text");
+    if(document.activeElement !== el) el.value = state.texts[id] || "";
+  });
+  const f = {
+    f_veteran: state.texts.f_veteran, f_date: state.texts.f_date, f_facility: state.texts.f_facility
+  };
+  ["f_veteran","f_date","f_facility"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && document.activeElement !== el) el.value = state.texts[id] || "";
+  });
+  if(document.activeElement !== document.getElementById("notesArea")){
+    document.getElementById("notesArea").value = state.texts.notes || "";
+  }
+  updateProgress();
+  suppressWrite = false;
+}
+
+function scheduleWrite(){
+  if(suppressWrite) return;
+  setSync("busy");
+  clearTimeout(writeTimer);
+  writeTimer = setTimeout(async () => {
+    try{
+      await setDoc(DOC_REF, {
+        checks: state.checks,
+        texts: state.texts,
+        code: state.code,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      setSync("ok");
+    }catch(e){
+      console.error(e);
+      setSync("err");
+    }
+  }, 400);
+}
+
+document.body.addEventListener("change", (e) => {
+  if(e.target.matches("[data-check]")){
+    const id = e.target.getAttribute("data-check");
+    state.checks[id] = e.target.checked;
+    updateItemDoneClass(id);
+    updateProgress();
+    scheduleWrite();
+  }
+});
+
+document.body.addEventListener("input", (e) => {
+  if(e.target.matches("[data-text]")){
+    const id = e.target.getAttribute("data-text");
+    state.texts[id] = e.target.value;
+    scheduleWrite();
+  }
+});
+
+["f_veteran","f_date","f_facility"].forEach(id => {
+  document.getElementById(id).addEventListener("input", (e) => {
+    state.texts[id] = e.target.value;
+    scheduleWrite();
+  });
+});
+
+document.getElementById("notesArea").addEventListener("input", (e) => {
+  state.texts.notes = e.target.value;
+  scheduleWrite();
+});
+
+function setSync(mode){
+  const dot = document.getElementById("syncDot");
+  const label = document.getElementById("syncLabel");
+  dot.className = "sync-dot" + (mode === "ok" ? " ok" : mode === "busy" ? " busy" : "");
+  label.textContent = mode === "ok" ? "Synced" : mode === "busy" ? "Saving…" : mode === "err" ? "Offline — will retry" : "Connecting…";
+}
+
+// ---- Auth + Firestore live sync ----
+let unsub = null;
+
+async function startSync(){
+  await signInAnonymously(auth);
+  unsub = onSnapshot(DOC_REF, (snap) => {
+    if(snap.exists()){
+      const data = snap.data();
+      state.checks = data.checks || {};
+      state.texts = data.texts || {};
+      state.code = data.code || state.code;
+      applyStateToDom();
+      setSync("ok");
+    }
+  }, (err) => { console.error(err); setSync("err"); });
+}
+
+// ---- Lock screen logic ----
+const lockEl = document.getElementById("lock");
+const appEl = document.getElementById("app");
+const pinInput = document.getElementById("pinInput");
+const lockBtn = document.getElementById("lockBtn");
+const lockMsg = document.getElementById("lockMsg");
+const lockTitle = document.getElementById("lockTitle");
+const lockSub = document.getElementById("lockSub");
+
+const SESSION_KEY = "tke_unlocked";
+
+const DEFAULT_CODE = "2899";
+let cachedCode = null;
+
+// Fetches the shared code from Firestore (seeding it with DEFAULT_CODE if
+// none exists yet). Falls back to DEFAULT_CODE if Firebase can't be reached
+// (e.g. the file was opened directly instead of being hosted) so the lock
+// screen never ends up stuck with a dead button.
+async function ensureCode(){
+  if(cachedCode) return cachedCode;
+  try{
+    await signInAnonymously(auth);
+    const snap = await getDoc(DOC_REF);
+    if(snap.exists() && snap.data().code){
+      cachedCode = snap.data().code;
+    } else {
+      await setDoc(DOC_REF, { code: DEFAULT_CODE, checks:{}, texts:{}, updatedAt: serverTimestamp() }, { merge: true });
+      cachedCode = DEFAULT_CODE;
+    }
+  } catch(e){
+    console.error("Could not reach Firebase — this page likely needs to be hosted (e.g. GitHub Pages) rather than opened as a local file.", e);
+    lockMsg.textContent = "Can't reach the server — make sure this page is hosted online, not opened as a local file.";
+    cachedCode = DEFAULT_CODE;
+  }
+  return cachedCode;
+}
+
+function init(){
+  if(sessionStorage.getItem(SESSION_KEY) === "1"){
+    unlockApp();
+    return;
+  }
+  pinInput.focus();
+  // Wire the button up immediately — don't wait on any async Firebase call,
+  // so the button always responds to a click even if Firebase is slow or
+  // unreachable.
+  lockBtn.addEventListener("click", attemptUnlock);
+  pinInput.addEventListener("keydown", (e) => { if(e.key === "Enter") attemptUnlock(); });
+}
+
+async function attemptUnlock(){
+  const val = pinInput.value.trim();
+  if(!/^\d{4}$/.test(val)){
+    lockMsg.textContent = "Enter exactly 4 digits.";
+    return;
+  }
+  lockMsg.textContent = "";
+  lockBtn.disabled = true;
+  lockBtn.textContent = "Checking…";
+  const code = await ensureCode();
+  lockBtn.disabled = false;
+  lockBtn.textContent = "Unlock";
+  if(val === code){
+    sessionStorage.setItem(SESSION_KEY, "1");
+    unlockApp();
+  } else {
+    lockMsg.textContent = "That code doesn't match. Try again.";
+    pinInput.value = "";
+    pinInput.focus();
+  }
+}
+
+function unlockApp(){
+  lockEl.style.display = "none";
+  appEl.style.display = "block";
+  startSync();
+}
+
+document.getElementById("lockAgainBtn").addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+});
+
+init();
+</script>
+</body>
+</html>

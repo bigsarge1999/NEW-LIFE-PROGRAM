@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Household Budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt:#20242C;
+    --asphalt-2:#2B303B;
+    --paper:#F7F4EC;
+    --paper-2:#EFEBDF;
+    --line:#D8D2C0;
+    --yellow:#F5B400;
+    --steel:#3C6E91;
+    --green:#3F7D53;
+    --green-bg:#E4F0E7;
+    --amber:#C68A1F;
+    --amber-bg:#FBF0DA;
+    --red:#B5432A;
+    --red-bg:#FAE8E2;
+    --text:#20242C;
+    --text-soft:#5B5F68;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding:32px 16px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{
+    background:var(--asphalt);
+    color:var(--paper);
+    border-radius:10px;
+    padding:22px 26px;
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:14px;
+    height:4px;
+    background:repeating-linear-gradient(90deg, var(--yellow) 0 26px, transparent 26px 46px);
+    opacity:0.9;
+  }
+  header h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.5px;
+    margin:0 0 4px;
+    text-transform:uppercase;
+  }
+  header p{margin:0;color:#C9CDD6;font-size:13px;}
+
+  .month-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:16px;
+    position:relative;
+    z-index:1;
+  }
+  .month-row label{font-size:12px;color:#C9CDD6;}
+  .month-row input[type=month]{
+    background:var(--asphalt-2);
+    color:var(--paper);
+    border:1px solid #444B58;
+    border-radius:6px;
+    padding:7px 10px;
+    font-family:'Roboto Mono',monospace;
+    font-size:13px;
+  }
+
+  .gauges{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .gauge{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .gauge .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    color:var(--text-soft);
+    margin-bottom:6px;
+  }
+  .gauge .value{
+    font-family:'Roboto Mono',monospace;
+    font-size:22px;
+    font-weight:500;
+  }
+  .gauge.income .value{color:var(--steel);}
+  .gauge.expense .value{color:var(--asphalt);}
+  .gauge.left .value{color:var(--green);}
+  .gauge.left.short .value{color:var(--red);}
+
+  .highway{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px 14px;
+    margin-bottom:22px;
+  }
+  .highway .top{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:var(--text-soft);
+    margin-bottom:8px;
+  }
+  .highway .top strong{color:var(--text);font-weight:600;}
+  .track{
+    position:relative;
+    height:20px;
+    background:var(--asphalt);
+    border-radius:5px;
+    overflow:hidden;
+  }
+  .track .fill{
+    height:100%;
+    background:var(--green);
+    transition:width 0.3s ease;
+  }
+  .track .fill.warn{background:var(--amber);}
+  .track .fill.over{background:var(--red);}
+  .track .dashes{
+    position:absolute;
+    top:50%;left:0;right:0;
+    height:2px;
+    transform:translateY(-50%);
+    background:repeating-linear-gradient(90deg, var(--yellow) 0 14px, transparent 14px 26px);
+  }
+  .highway .note{
+    margin-top:8px;
+    font-size:12px;
+    color:var(--text-soft);
+  }
+
+  section.panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper-2);
+  }
+  .panel-head h2{
+    font-family:'Oswald',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin:0;
+  }
+  .panel-head .subtotal{
+    font-family:'Roboto Mono',monospace;
+    font-size:14px;
+    color:var(--text-soft);
+  }
+  .rows{padding:6px 10px;}
+  .row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 8px;
+    border-bottom:1px solid #F0EDE3;
+  }
+  .row:last-child{border-bottom:none;}
+  .row input[type=text]{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-size:14px;
+    padding:6px 4px;
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+  }
+  .row input[type=text]:focus{outline:none;background:var(--paper-2);border-radius:4px;}
+  .row select{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:5px;
+    font-size:12px;
+    padding:6px 6px;
+    color:var(--text-soft);
+    width:120px;
+    flex-shrink:0;
+  }
+  .row .amt{
+    display:flex;
+    align-items:center;
+    width:110px;
+    flex-shrink:0;
+  }
+  .row .amt span{color:var(--text-soft);font-size:13px;margin-right:2px;}
+  .row .amt input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:6px 8px;
+    font-family:'Roboto Mono',monospace;
+    font-size:13px;
+    text-align:right;
+  }
+  .row .amt input:focus{outline:none;border-color:var(--steel);}
+  .row .del{
+    background:none;
+    border:none;
+    color:#B0AA96;
+    cursor:pointer;
+    font-size:16px;
+    line-height:1;
+    padding:4px 6px;
+    flex-shrink:0;
+  }
+  .row .del:hover{color:var(--red);}
+
+  .add-row{
+    display:flex;
+    justify-content:flex-start;
+    padding:8px 12px 12px;
+  }
+  .add-btn{
+    background:none;
+    border:1px dashed #BEB79E;
+    border-radius:6px;
+    padding:7px 14px;
+    font-size:12px;
+    color:var(--text-soft);
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .add-btn:hover{border-color:var(--steel);color:var(--steel);}
+
+  .empty{
+    padding:18px 12px;
+    text-align:center;
+    color:#A9A38D;
+    font-size:13px;
+  }
+
+  footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+    font-size:12px;
+    color:var(--text-soft);
+  }
+  .reset-btn{
+    background:none;
+    border:none;
+    color:#A9A38D;
+    text-decoration:underline;
+    cursor:pointer;
+    font-size:12px;
+    font-family:'Inter',sans-serif;
+  }
+  .reset-btn:hover{color:var(--red);}
+  .save-state{font-family:'Roboto Mono',monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Household budget</h1>
+    <p>Built for runs and settlements that don't come the same size twice.</p>
+    <div class="month-row">
+      <label for="monthPicker">Month</label>
+      <input type="month" id="monthPicker">
+    </div>
+  </header>
+
+  <div class="gauges">
+    <div class="gauge income">
+      <div class="label">Income</div>
+      <div class="value" id="gIncome">$0</div>
+    </div>
+    <div class="gauge expense">
+      <div class="label">Expenses</div>
+      <div class="value" id="gExpense">$0</div>
+    </div>
+    <div class="gauge left" id="gLeftWrap">
+      <div class="label">Left over</div>
+      <div class="value" id="gLeft">$0</div>
+    </div>
+  </div>
+
+  <div class="highway">
+    <div class="top"><span>Miles run this month</span><strong id="pctLabel">0% spent</strong></div>
+    <div class="track">
+      <div class="fill" id="fillBar" style="width:0%"></div>
+      <div class="dashes"></div>
+    </div>
+    <div class="note" id="highwayNote">Add income and expenses below to see where you stand.</div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Income</h2>
+      <div class="subtotal" id="incomeSubtotal">$0.00</div>
+    </div>
+    <div class="rows" id="incomeRows"></div>
+    <div class="add-row"><button class="add-btn" id="addIncome">+ Add income</button></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Expenses</h2>
+      <div class="subtotal" id="expenseSubtotal">$0.00</div>
+    </div>
+    <div class="rows" id="expenseRows"></div>
+    <div class="add-row"><button class="add-btn" id="addExpense">+ Add expense</button></div>
+  </section>
+
+  <footer>
+    <span class="save-state" id="saveState">Connecting…</span>
+    <button class="reset-btn" id="resetBtn">Clear this month</button>
+  </footer>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Same Firebase project + shared data folder as the rest of the dashboard,
+// so this tab's data lives alongside Tasks/Habits/Fuel/Meds and syncs
+// across every device the same way.
+const firebaseConfig = {
+  apiKey: "AIzaSyBHl3XE8F4HsIv-347Q-psQoTOGy7RHdjI",
+  authDomain: "lifes-good-4d55a.firebaseapp.com",
+  databaseURL: "https://lifes-good-4d55a-default-rtdb.firebaseio.com",
+  projectId: "lifes-good-4d55a",
+  storageBucket: "lifes-good-4d55a.firebasestorage.app",
+  messagingSenderId: "412337437135",
+  appId: "1:412337437135:web:f918f938050c93211ababa",
+  measurementId: "G-JCLXD56248"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const SHARED_DATA_ID = 'bigsarge-dashboard';
+let uid = null;
+let ready = false;
+
+const CATEGORIES = ["Housing","Utilities","Insurance","Fuel","Food","Debt","Phone/Internet","Truck/Maintenance","Other"];
+
+let currentMonth = new Date().toISOString().slice(0,7);
+let data = { income: [], expenses: [] };
+let saveTimer = null;
+
+function uidGen(){ return Math.random().toString(36).slice(2,9); }
+
+function fmt(n){
+  const v = Number.isFinite(n) ? n : 0;
+  return v.toLocaleString('en-US', {style:'currency', currency:'USD'});
+}
+
+function budgetDoc(m){ return doc(db, 'users', uid, 'budgets', m); }
+
+async function loadMonth(m){
+  if(!ready) return;
+  document.getElementById('saveState').textContent = 'Loading…';
+  try{
+    const snap = await getDoc(budgetDoc(m));
+    data = snap.exists() ? snap.data() : { income: [], expenses: [] };
+  }catch(e){
+    console.error(e);
+    data = { income: [], expenses: [] };
+    document.getElementById('saveState').textContent = 'Could not load';
+  }
+  if(!Array.isArray(data.income)) data.income = [];
+  if(!Array.isArray(data.expenses)) data.expenses = [];
+  render();
+  document.getElementById('saveState').textContent = 'Saved';
+}
+
+async function saveMonth(){
+  if(!ready) return;
+  document.getElementById('saveState').textContent = 'Saving…';
+  try{
+    await setDoc(budgetDoc(currentMonth), data);
+    document.getElementById('saveState').textContent = 'Saved';
+  }catch(e){
+    console.error(e);
+    document.getElementById('saveState').textContent = 'Could not save';
+  }
+}
+
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveMonth, 400);
+}
+
+function makeIncomeRow(entry){
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `
+    <input type="text" placeholder="e.g. Load settlement, Per diem" value="${escapeAttr(entry.label)}" data-field="label">
+    <div class="amt"><span>$</span><input type="text" inputmode="decimal" value="${entry.amount || ''}" data-field="amount" placeholder="0.00"></div>
+    <button class="del" aria-label="Remove">×</button>
+  `;
+  wireRow(row, entry, data.income);
+  return row;
+}
+
+function makeExpenseRow(entry){
+  const row = document.createElement('div');
+  row.className = 'row';
+  const options = CATEGORIES.map(c => `<option value="${c}" ${c===entry.category?'selected':''}>${c}</option>`).join('');
+  row.innerHTML = `
+    <select data-field="category">${options}</select>
+    <input type="text" placeholder="e.g. Rent, Truck payment" value="${escapeAttr(entry.label)}" data-field="label">
+    <div class="amt"><span>$</span><input type="text" inputmode="decimal" value="${entry.amount || ''}" data-field="amount" placeholder="0.00"></div>
+    <button class="del" aria-label="Remove">×</button>
+  `;
+  wireRow(row, entry, data.expenses);
+  return row;
+}
+
+function escapeAttr(s){
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function wireRow(row, entry, list){
+  row.querySelectorAll('[data-field]').forEach(el => {
+    const field = el.dataset.field;
+    el.addEventListener('input', () => {
+      if(field === 'amount'){
+        const cleaned = el.value.replace(/[^0-9.\-]/g,'');
+        entry.amount = cleaned === '' ? 0 : parseFloat(cleaned);
+      } else {
+        entry[field] = el.value;
+      }
+      recalc();
+      queueSave();
+    });
+    el.addEventListener('blur', () => {
+      if(field === 'amount'){
+        el.value = entry.amount ? entry.amount : '';
+      }
+    });
+  });
+  row.querySelector('.del').addEventListener('click', () => {
+    const idx = list.indexOf(entry);
+    if(idx > -1) list.splice(idx,1);
+    render();
+    queueSave();
+  });
+}
+
+function render(){
+  const incomeContainer = document.getElementById('incomeRows');
+  const expenseContainer = document.getElementById('expenseRows');
+  incomeContainer.innerHTML = '';
+  expenseContainer.innerHTML = '';
+
+  if(data.income.length === 0){
+    incomeContainer.innerHTML = '<div class="empty">No income logged for this month yet.</div>';
+  } else {
+    data.income.forEach(entry => incomeContainer.appendChild(makeIncomeRow(entry)));
+  }
+
+  if(data.expenses.length === 0){
+    expenseContainer.innerHTML = '<div class="empty">No expenses logged for this month yet.</div>';
+  } else {
+    data.expenses.forEach(entry => expenseContainer.appendChild(makeExpenseRow(entry)));
+  }
+
+  recalc();
+}
+
+function recalc(){
+  const totalIncome = data.income.reduce((s,e) => s + (Number(e.amount) || 0), 0);
+  const totalExpense = data.expenses.reduce((s,e) => s + (Number(e.amount) || 0), 0);
+  const left = totalIncome - totalExpense;
+
+  document.getElementById('gIncome').textContent = fmt(totalIncome);
+  document.getElementById('gExpense').textContent = fmt(totalExpense);
+  document.getElementById('gLeft').textContent = fmt(left);
+  document.getElementById('incomeSubtotal').textContent = fmt(totalIncome);
+  document.getElementById('expenseSubtotal').textContent = fmt(totalExpense);
+
+  const leftGauge = document.getElementById('gLeftWrap');
+  leftGauge.classList.toggle('short', left < 0);
+
+  const pct = totalIncome > 0 ? Math.min(150, (totalExpense / totalIncome) * 100) : (totalExpense > 0 ? 150 : 0);
+  const bar = document.getElementById('fillBar');
+  const displayPct = Math.min(100, pct);
+  bar.style.width = displayPct + '%';
+  bar.classList.remove('warn','over');
+  let note = '';
+  if(totalIncome === 0 && totalExpense === 0){
+    note = 'Add income and expenses below to see where you stand.';
+  } else if(pct >= 100){
+    bar.classList.add('over');
+    note = 'You are spending more than you are bringing in this month.';
+  } else if(pct >= 80){
+    bar.classList.add('warn');
+    note = 'Getting close to the edge of the shoulder — keep an eye on it.';
+  } else {
+    note = 'Running under budget with room to spare.';
+  }
+  document.getElementById('pctLabel').textContent = Math.round(pct) + '% spent';
+  document.getElementById('highwayNote').textContent = note;
+}
+
+document.getElementById('addIncome').addEventListener('click', () => {
+  data.income.push({ id: uidGen(), label: '', amount: 0 });
+  render();
+  queueSave();
+});
+
+document.getElementById('addExpense').addEventListener('click', () => {
+  data.expenses.push({ id: uidGen(), category: 'Other', label: '', amount: 0 });
+  render();
+  queueSave();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if(confirm('Clear all income and expenses for this month? This cannot be undone.')){
+    data = { income: [], expenses: [] };
+    render();
+    queueSave();
+  }
+});
+
+document.getElementById('monthPicker').addEventListener('change', (e) => {
+  currentMonth = e.target.value;
+  loadMonth(currentMonth);
+});
+
+document.getElementById('monthPicker').value = currentMonth;
+
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    uid = SHARED_DATA_ID;
+    ready = true;
+    loadMonth(currentMonth);
+  } else {
+    signInAnonymously(auth).catch(err => {
+      document.getElementById('saveState').textContent = 'Offline (check Firebase)';
+      console.error(err);
+    });
+  }
+});
+</script>
+</body>
+</html>

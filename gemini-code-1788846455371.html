@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Board</title>
+  <style>
+    :root {
+      --bg: #121418;
+      --panel: #1a1d24;
+      --panel-2: #222630;
+      --line: #2e3440;
+      --text: #e5e9f0;
+      --text-dim: #98a2b3;
+      --text-faint: #636e7b;
+      --accent: #4c566a;
+      --green-bright: #30d158;
+      --amber: #ff9f0a;
+      --red: #ff453a;
+      --blue: #0a84ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; font-size: 14px; }
+
+    /* HEADER & NAV */
+    .hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .hdr-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .hdr-actions { display: flex; gap: 8px; }
+    .hdr-btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .hdr-btn:hover { background: var(--line); }
+
+    /* TAB BAR */
+    .tabbar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .tab-btn { background: var(--panel); border: 1px solid var(--line); color: var(--text-dim); padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; }
+    .tab-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--accent); font-weight: 600; }
+    .tab-btn .idx { opacity: 0.5; margin-right: 6px; font-size: 11px; }
+
+    /* PANES */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* LAYOUT & PANELS */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .panel-title { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .count-pill { background: var(--panel-2); border: 1px solid var(--line); font-size: 11px; padding: 2px 8px; border-radius: 12px; color: var(--text-dim); }
+
+    /* INPUTS & FORM ROWS */
+    .add-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      background: var(--bg); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+    button { background: var(--accent); border: none; color: #fff; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text-dim); }
+
+    /* LIST ITEMS */
+    .task { display: flex; justify-content: space-between; align-items: center; background: var(--panel-2); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 8px; }
+    .task.done { opacity: 0.5; text-decoration: line-through; }
+    .task-text { flex: 1; }
+    .task-del { color: var(--text-faint); cursor: pointer; padding: 2px 6px; font-size: 14px; }
+    .task-del:hover { color: var(--red); }
+    .checkbox { width: 18px; height: 18px; border: 1px solid var(--line); border-radius: 4px; margin-right: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .checkbox.on { background: var(--green-bright); border-color: var(--green-bright); color: #000; }
+    .maint-tag { font-size: 10px; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--line); color: var(--text-dim); margin-left: 6px; }
+
+    /* DOC & COMPLIANCE STYLES */
+    .doc-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--line); }
+    .doc-exp { font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+    .doc-exp.soon { background: rgba(255,159,10,0.15); color: var(--amber); }
+    .doc-exp.past { background: rgba(255,69,58,0.15); color: var(--red); }
+
+    /* OVERLAYS & SEARCH */
+    .cmdk-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 80px; }
+    .cmdk-overlay.open { display: flex; }
+    .cmdk-box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; width: 500px; padding: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .cmdk-input { width: 100%; font-size: 15px; margin-bottom: 12px; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 8px 0; background: transparent; }
+    .cmdk-list { max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .cmdk-item { padding: 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; color: var(--text-dim); }
+    .cmdk-item:hover { background: var(--panel-2); color: var(--text); }
+    .cmdk-hint { font-size: 11px; color: var(--text-faint); margin-top: 8px; text-align: right; }
+    .empty { color: var(--text-faint); font-style: italic; font-size: 12px; padding: 8px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-title">Control Board</div>
+    <div class="hdr-actions">
+      <button class="hdr-btn" id="globalSearchBtn">🔍 Global Search <span style="color:var(--text-faint);">Ctrl+Shift+F</span></button>
+      <button class="hdr-btn" id="cmdkBtn">⌘ Jump <span style="color:var(--text-faint);">Ctrl+K</span></button>
+      <button class="hdr-btn" id="notifBtn">🔔 Alerts: off</button>
+      <button class="hdr-btn" id="themeBtn">◐ Theme</button>
+      <button class="hdr-btn" id="exportAllBtn">⭳ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- TAB NAVIGATION -->
+  <div class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-tab="overview"><span class="idx">01</span> Overview</button>
+    <button class="tab-btn" data-tab="tasks"><span class="idx">02</span> Tasks</button>
+    <button class="tab-btn" data-tab="jobcost"><span class="idx">18</span> Job Cost</button>
+    <button class="tab-btn" data-tab="dot"><span class="idx">19</span> DOT / Compliance</button>
+    <button class="tab-btn" data-tab="lift"><span class="idx">20</span> Lift Tracker</button>
+    <button class="tab-btn" data-tab="projects"><span class="idx">21</span> Garage Projects</button>
+    <button class="tab-btn" data-tab="mcmaint"><span class="idx">22</span> Moto Maint</button>
+    <button class="tab-btn" data-tab="vethospital"><span class="idx">23</span> Vet Hospital</button>
+    <button class="tab-btn" data-tab="shopping"><span class="idx">24</span> Shared List</button>
+    <button class="tab-btn" data-tab="woodworking"><span class="idx">25</span> Wood Design</button>
+    <button class="tab-btn" data-tab="bookmarks"><span class="idx">26</span> Bookmarks</button>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div class="tab-pane active" id="pane-overview">
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Urgent &amp; Upcoming Alerts</div>
+        </div>
+        <div id="ovDueList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASKS TAB -->
+  <div class="tab-pane" id="pane-tasks">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Task Management</div>
+      </div>
+      <div class="add-row">
+        <input type="text" id="taskInput" placeholder="Add a new task..." style="flex:1;">
+        <button id="taskAddBtn">Add Task</button>
+      </div>
+      <div id="taskList"></div>
+    </div>
+  </div>
+
+  <!-- JOB COST CALCULATOR -->
+  <div class="tab-pane" id="pane-jobcost">
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">18</span> F650 / Cat C7 Job Cost Calculator</div>
+        <div class="count-pill">Quote Estimator</div>
+      </div>
+      <div class="grid">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="add-row" style="flex-wrap:wrap;">
+            <input type="number" id="jcDistance" placeholder="Total distance (miles)" value="250">
+            <input type="number" id="jcFuelPrice" placeholder="Diesel price ($/gal)" value="3.85" step="0.01">
+          </div>
+          <div class="add-row" style="flex-wrap:wrap;">
+            <input type="number" id="jcLoadedPct" placeholder="Loaded % distance" value="50" min="0" max="100">
+            <input type="number" id="jcDriverRate" placeholder="Driver / Labor rate ($/hr)" value="35">
+            <input type="number" id="jcAvgSpeed" placeholder="Avg speed (mph)" value="55">
+          </div>
+          <div class="add-row" style="flex-wrap:wrap;">
+            <input type="number" id="jcLoadedMpg" placeholder="Loaded MPG (default 9)" value="9" step="0.1">
+            <input type="number" id="jcEmptyMpg" placeholder="Empty MPG (default 13)" value="13" step="0.1">
+          </div>
+          <div class="add-row" style="flex-wrap:wrap;">
+            <input type="number" id="jcTolls" placeholder="Tolls / Lumper / Fees ($)" value="25">
+            <input type="number" id="jcMaintReserve" placeholder="Maint reserve ($/mile)" value="0.25" step="0.01">
+            <input type="number" id="jcTargetMargin" placeholder="Target profit margin %" value="25">
+          </div>
+        </div>
+        <div class="panel" style="background:var(--panel-2);">
+          <div class="panel-title" style="margin-bottom:12px;">Quote Summary</div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13.5px;">
+            <div style="display:flex; justify-content:space-between;"><span>Estimated Fuel:</span><strong id="jcFuelCost" style="color:var(--amber);">$0.00</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Driver Labor:</span><strong id="jcLaborCost">$0.00</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Maint Reserve:</span><strong id="jcMaintCost">$0.00</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Fixed Fees/Tolls:</span><strong id="jcFeesCost">$0.00</strong></div>
+            <hr style="border:0; border-top:1px solid var(--line); margin:4px 0;">
+            <div style="display:flex; justify-content:space-between; font-weight:700;"><span>Total Operating Cost:</span><strong id="jcTotalCost" style="color:var(--red);">$0.00</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Cost / Mile:</span><strong id="jcCostPerMile">$0.00</strong></div>
+            <hr style="border:0; border-top:1px solid var(--line); margin:4px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700;"><span>Suggested Quote:</span><strong id="jcSuggestedQuote" style="color:var(--green-bright);">$0.00</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Rate / Mile:</span><strong id="jcQuotePerMile" style="color:var(--green-bright);">$0.00</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOT & COMPLIANCE TRACKER -->
+  <div class="tab-pane" id="pane-dot">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">19</span> DOT &amp; Compliance Tracker</div>
+        <div class="count-pill" id="dotCount">0 items</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="dotTitle" placeholder="Item name (Annual Inspection, IFTA Q3, Med Card, Insurance)" style="flex:1.5; min-width:180px;">
+        <select id="dotCategory" style="flex:1; min-width:130px;">
+          <option value="Inspection">Annual Inspection</option>
+          <option value="IFTA">IFTA Deadline</option>
+          <option value="Medical Card">Medical Card Expiration</option>
+          <option value="Insurance">Insurance Renewal</option>
+          <option value="Permit">Permit / License</option>
+          <option value="Other">Other Compliance</option>
+        </select>
+        <input type="date" id="dotDueDate" style="flex:1; min-width:130px;">
+        <input type="text" id="dotNotes" placeholder="Policy #, State, or Notes" style="flex:1.2; min-width:160px;">
+        <button id="dotAddBtn">Add Record</button>
+      </div>
+      <div id="dotList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- LIFT TRACKER EMBED -->
+  <div class="tab-pane" id="pane-lift">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">20</span> Lift Tracker</div>
+        <span class="count-pill">embedded</span>
+      </div>
+      <iframe
+        id="liftFrame"
+        src="lift-tracker.html"
+        title="Lift Tracker"
+        style="width:100%; height:820px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2);"
+        loading="lazy">
+      </iframe>
+    </div>
+  </div>
+
+  <!-- DIY / GARAGE PROJECTS -->
+  <div class="tab-pane" id="pane-projects">
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">21</span> Garage &amp; Build Projects Log</div>
+        <div class="count-pill" id="projectCount">0 builds</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="projTitle" placeholder="Project name (Harley harness, Hutch, Trailer wiring)" style="flex:1.5; min-width:180px;">
+        <select id="projStatus" style="flex:1; min-width:120px;">
+          <option value="Planning">Planning</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Waiting on Parts">Waiting on Parts</option>
+          <option value="Completed">Completed</option>
+        </select>
+        <input type="text" id="projNextStep" placeholder="Immediate next step" style="flex:1.5; min-width:160px;">
+        <input type="text" id="projPartsNeeded" placeholder="Parts needed (comma separated)" style="flex:1.5; min-width:180px;">
+        <button id="projAddBtn">Log Project</button>
+      </div>
+    </div>
+    <div class="grid" id="projectColumns"></div>
+  </div>
+
+  <!-- MOTORCYCLE MAINTENANCE -->
+  <div class="tab-pane" id="pane-mcmaint">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">22</span> Motorcycle Maintenance &amp; Presets</div>
+        <div class="count-pill" id="mcMaintCount">0 records</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="mcBike" placeholder="Bike (e.g. 2008 Harley Electra Glide)" style="flex:1; min-width:160px;">
+        <select id="mcPreset" style="flex:1.2; min-width:180px;">
+          <option value="Custom">Custom Service</option>
+          <option value="Harley Primary Fluid Change">Harley Primary Fluid Change</option>
+          <option value="Harley Transmission Oil Change">Harley Transmission Oil Change</option>
+          <option value="Harley Engine Oil & Filter">Harley Engine Oil & Filter</option>
+          <option value="Harley Drive Belt Inspection/Tension">Harley Drive Belt Tension</option>
+          <option value="Harley Clutch Cable Adjustment">Harley Clutch Cable Adj</option>
+          <option value="Harley Brake Fluid Flush (DOT 4)">Harley Brake Fluid Flush</option>
+          <option value="Harley Spark Plugs & Wires">Harley Spark Plugs</option>
+        </select>
+        <input type="text" id="mcTitle" placeholder="Service description" style="flex:1.5; min-width:180px;">
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="number" id="mcOdo" placeholder="Odometer (miles)" style="flex:1; min-width:120px;">
+        <input type="date" id="mcDate" style="flex:1; min-width:130px;">
+        <input type="number" id="mcCost" placeholder="Cost ($)" step="0.01" style="flex:1; min-width:100px;">
+        <input type="text" id="mcNotes" placeholder="Notes / Fluid Specs" style="flex:1.5; min-width:160px;">
+        <button id="mcAddBtn">Log Moto Maint</button>
+      </div>
+      <div id="mcList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- VET HOSPITAL PLANNING BOARD -->
+  <div class="tab-pane" id="pane-vethospital">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">23</span> Vet Hospital Planning Board</div>
+        <div class="count-pill" id="vetProgress">0% completed</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <select id="vetCategory" style="flex:1; min-width:140px;">
+          <option value="Licensing & Legal">Licensing &amp; Legal</option>
+          <option value="Buildout & Facility">Buildout &amp; Facility</option>
+          <option value="Equipment & Medical">Equipment &amp; Medical</option>
+          <option value="Staffing & Operations">Staffing &amp; Operations</option>
+          <option value="Finance & Budget">Finance &amp; Budget</option>
+        </select>
+        <input type="text" id="vetTask" placeholder="Milestone / Task description" style="flex:2; min-width:200px;">
+        <input type="text" id="vetOwner" placeholder="Owner (You, Wife, Morgan)" style="flex:1; min-width:120px;">
+        <input type="date" id="vetTargetDate" style="flex:1; min-width:130px;">
+        <button id="vetAddBtn">Add Task</button>
+      </div>
+      <div id="vetTasksList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- SHARED SHOPPING & ERRAND LIST -->
+  <div class="tab-pane" id="pane-shopping">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">24</span> Shared Shopping &amp; Errand List</div>
+        <div class="count-pill" id="shoppingCount">0 open items</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="shopItem" placeholder="Item or errand needed..." style="flex:2; min-width:180px;">
+        <select id="shopStore" style="flex:1; min-width:130px;">
+          <option value="Grocery">Grocery</option>
+          <option value="Hardware / Shop">Hardware / Shop</option>
+          <option value="Truck Parts">Truck Parts</option>
+          <option value="Pharmacy / Meds">Pharmacy / Meds</option>
+          <option value="General Errand">General Errand</option>
+        </select>
+        <input type="text" id="shopNotes" placeholder="Qty / Brand / Notes" style="flex:1.5; min-width:150px;">
+        <button id="shopAddBtn">Add Item</button>
+      </div>
+      <div id="shoppingList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- WOODWORKING DESIGN TOOL -->
+  <div class="tab-pane" id="pane-woodworking">
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">25</span> Wood Design &amp; Cut List Calculator</div>
+        <div class="count-pill">Interactive Estimator</div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="woodProjName" placeholder="Project Title (e.g., Garage Workbench, Bookshelf)" value="Shop Workbench" style="flex:1.5; min-width:180px;">
+        <select id="woodWoodType" style="flex:1; min-width:130px;">
+          <option value="Pine / Softwood">Pine / Softwood</option>
+          <option value="Oak">Oak</option>
+          <option value="Maple">Maple</option>
+          <option value="Walnut">Walnut</option>
+          <option value="Plywood 3/4in">Plywood 3/4"</option>
+          <option value="Plywood 1/2in">Plywood 1/2"</option>
+        </select>
+        <input type="number" id="woodBoardFootCost" placeholder="Price per Bd-Ft or Sheet ($)" value="4.50" step="0.1" style="flex:1; min-width:130px;">
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="woodPartName" placeholder="Part Label (Leg, Apron, Top Slats)" style="flex:1.5; min-width:160px;">
+        <input type="number" id="woodPartQty" placeholder="Qty" value="4" min="1" style="flex:0.8; min-width:70px;">
+        <input type="number" id="woodPartThick" placeholder="T (in)" value="1.5" step="0.125" style="flex:0.8; min-width:80px;">
+        <input type="number" id="woodPartWidth" placeholder="W (in)" value="3.5" step="0.125" style="flex:0.8; min-width:80px;">
+        <input type="number" id="woodPartLength" placeholder="L (in)" value="32" step="0.125" style="flex:0.8; min-width:80px;">
+        <button id="woodAddPartBtn">Add Part</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Parts &amp; Cut List</div>
+        </div>
+        <div id="woodPartsList"></div>
+      </div>
+      <div class="panel" style="background:var(--panel-2);">
+        <div class="panel-head">
+          <div class="panel-title">Material Summary</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; font-size:13.5px;">
+          <div style="display:flex; justify-content:space-between;"><span>Total Board Feet Required:</span><strong id="woodTotalBF" style="color:var(--amber);">0.00 BF</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span>Waste Allowance (15%):</span><strong id="woodWasteBF">0.00 BF</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span>Estimated Material Cost:</span><strong id="woodEstCost" style="color:var(--green-bright);">$0.00</strong></div>
+          <hr style="border:0; border-top:1px solid var(--line); margin:4px 0;">
+          <div style="font-size:12px; color:var(--text-dim); line-height:1.5;">
+            <strong>Formula:</strong> Board Feet = (Thickness × Width × Length / 144) × Quantity.<br>
+            Use this table as your exact shop cut sheet when dimensioning lumber.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOKMARKS -->
+  <div class="tab-pane" id="pane-bookmarks">
+    <div class="panel" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <div class="panel-title"><span class="idx">26</span> Bookmarks</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="ghost" id="bmExportBtn" style="font-size:11px; padding:5px 10px;">⭳ CSV</button>
+          <div class="count-pill" id="bmCount">0 saved</div>
+        </div>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="bmName" placeholder="Site name" style="flex:1.2; min-width:140px;">
+        <input type="text" id="bmUrl" placeholder="https://example.com" style="flex:1.6; min-width:200px;">
+        <select id="bmCategory" style="flex:1; min-width:130px;">
+          <option value="Reference">Reference</option>
+          <option value="Trucking/Business">Trucking/Business</option>
+          <option value="Shopping">Shopping</option>
+          <option value="DIY">DIY</option>
+          <option value="Tools">Tools</option>
+          <option value="News">News</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <input type="text" id="bmTags" placeholder="Tags, comma separated (optional)" style="flex:1.4; min-width:160px;">
+        <input type="text" id="bmDesc" placeholder="Notes / why you saved it (optional)" style="flex:2; min-width:200px;">
+        <button id="bmAddBtn" style="flex:1; min-width:110px;">Save site</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL SEARCH OVERLAY -->
+  <div class="cmdk-overlay" id="searchOverlay">
+    <div class="cmdk-box" style="width:680px;">
+      <input type="text" class="cmdk-input" id="globalSearchInput" placeholder="Global Search: tasks, docs, bookmarks, maintenance, projects, loads...">
+      <div class="cmdk-list" id="globalSearchList" style="max-height:420px;"></div>
+      <div class="cmdk-hint">Esc to close · Searches across all Control Board records</div>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // State Store & Mock Data Structure
+    let state = {
+      pinnedTabs: JSON.parse(localStorage.getItem('cb-pinned-tabs') || '[]'),
+      tasks: [
+        { id: '1', text: 'Schedule DOT Annual Inspection for F650', done: false },
+        { id: '2', text: 'Order primary fluid for Harley Electra Glide', done: false }
+      ],
+      dotItems: [
+        { id: '1', title: 'F650 Annual Inspection', category: 'Inspection', dueDate: '2026-10-15', notes: 'Local Shop' },
+        { id: '2', title: 'Medical Card Renewal', category: 'Medical Card', dueDate: '2026-09-30', notes: 'Dr. Smith' }
+      ],
+      projects: [
+        { id: '1', title: 'Harley Wiring Harness', status: 'In Progress', nextStep: 'Solder tail connector', partsNeeded: 'Shrink tubing' },
+        { id: '2', title: 'Garage Workbench', status: 'Planning', nextStep: 'Buy lumber', partsNeeded: '2x4 lumber, 3/4 plywood' }
+      ],
+      mcMaint: [
+        { id: '1', bike: '2008 Harley Electra Glide', title: 'Harley Engine Oil & Filter', odometer: 24500, date: '2026-08-12', cost: 45.00, notes: '20W-50 Synthetic' }
+      ],
+      vetTasks: [
+        { id: '1', category: 'Licensing & Legal', task: 'Submit State Veterinary Board Application', owner: 'Self', targetDate: '2026-11-01', done: false }
+      ],
+      shopping: [
+        { id: '1', store: 'Hardware / Shop', item: '3/8" Drive Socket Extension', notes: '6 inch', done: false }
+      ],
+      woodParts: [
+        { id: '1', name: 'Legs', qty: 4, thick: 3.5, width: 3.5, length: 32 },
+        { id: '2', name: 'Top Support Frame', qty: 2, thick: 1.5, width: 3.5, length: 60 }
+      ]
+    };
+
+    // TAB NAVIGATION & PINNING
+    function goToTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+      const pane = document.getElementById(`pane-${tabName}`);
+      if (btn && pane) {
+        btn.classList.add('active');
+        pane.classList.add('active');
+      }
+    }
+
+    function renderTabPinning() {
+      const tabbar = document.getElementById('tabbar');
+      const buttons = Array.from(tabbar.querySelectorAll('.tab-btn'));
+      
+      buttons.forEach(btn => {
+        const tabName = btn.dataset.tab;
+        const isPinned = state.pinnedTabs.includes(tabName);
+        let pinIcon = btn.querySelector('.pin-icon');
+        if(!pinIcon){
+          pinIcon = document.createElement('span');
+          pinIcon.className = 'pin-icon';
+          pinIcon.style.fontSize = '10px';
+          pinIcon.style.cursor = 'pointer';
+          pinIcon.style.marginLeft = '4px';
+          btn.appendChild(pinIcon);
+        }
+        pinIcon.textContent = isPinned ? '★' : '☆';
+        pinIcon.style.color = isPinned ? 'var(--amber)' : 'var(--text-faint)';
+        pinIcon.onclick = (e) => {
+          e.stopPropagation();
+          togglePinTab(tabName);
+        };
+      });
+
+      buttons.sort((a,b) => {
+        const aPin = state.pinnedTabs.includes(a.dataset.tab);
+        const bPin = state.pinnedTabs.includes(b.dataset.tab);
+        if(aPin && !bPin) return -1;
+        if(!aPin && bPin) return 1;
+        return 0;
+      });
+      buttons.forEach(b => tabbar.appendChild(b));
+    }
+
+    function togglePinTab(tabName) {
+      if(state.pinnedTabs.includes(tabName)){
+        state.pinnedTabs = state.pinnedTabs.filter(t => t !== tabName);
+      } else {
+        state.pinnedTabs.push(tabName);
+      }
+      localStorage.setItem('cb-pinned-tabs', JSON.stringify(state.pinnedTabs));
+      renderTabPinning();
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => goToTab(btn.dataset.tab));
+    });
+
+    // OVERVIEW
+    function renderOverview() {
+      const listEl = document.getElementById('ovDueList');
+      listEl.innerHTML = '';
+      let totalDue = 0;
+
+      const openTasks = state.tasks.filter(t => !t.done).length;
+      if(openTasks > 0) {
+        totalDue += openTasks;
+        const row = document.createElement('div');
+        row.className = 'doc-row';
+        row.innerHTML = `<span>Open Tasks</span><span class="count-pill">${openTasks} open</span>`;
+        listEl.appendChild(row);
+      }
+
+      const now = new Date();
+      state.dotItems.forEach(d => {
+        if(d.dueDate){
+          const due = new Date(d.dueDate);
+          const diffDays = Math.ceil((due - now) / (1000*60*60*24));
+          if(diffDays <= 30){
+            totalDue++;
+            const row = document.createElement('div');
+            row.className = 'doc-row';
+            const expClass = diffDays < 0 ? 'past' : 'soon';
+            row.innerHTML = `<span>DOT: ${d.title}</span><span class="doc-exp ${expClass}">${diffDays < 0 ? 'OVERDUE' : diffDays + 'd left'}</span>`;
+            listEl.appendChild(row);
+          }
+        }
+      });
+
+      if(!totalDue){
+        listEl.innerHTML = '<div class="empty">All clear! No urgent items right now.</div>';
+      }
+    }
+
+    // JOB COST CALCULATOR
+    function calcJobCost() {
+      const dist = parseFloat(document.getElementById('jcDistance').value) || 0;
+      const fuelPrice = parseFloat(document.getElementById('jcFuelPrice').value) || 0;
+      const loadedPct = (parseFloat(document.getElementById('jcLoadedPct').value) || 50) / 100;
+      const driverRate = parseFloat(document.getElementById('jcDriverRate').value) || 0;
+      const avgSpeed = parseFloat(document.getElementById('jcAvgSpeed').value) || 55;
+      const loadedMpg = parseFloat(document.getElementById('jcLoadedMpg').value) || 9;
+      const emptyMpg = parseFloat(document.getElementById('jcEmptyMpg').value) || 13;
+      const tolls = parseFloat(document.getElementById('jcTolls').value) || 0;
+      const maintRate = parseFloat(document.getElementById('jcMaintReserve').value) || 0;
+      const marginPct = (parseFloat(document.getElementById('jcTargetMargin').value) || 25) / 100;
+
+      const loadedMiles = dist * loadedPct;
+      const emptyMiles = dist * (1 - loadedPct);
+      const fuelGallons = (loadedMiles / (loadedMpg || 1)) + (emptyMiles / (emptyMpg || 1));
+      const fuelCost = fuelGallons * fuelPrice;
+      const driveHours = avgSpeed > 0 ? (dist / avgSpeed) : 0;
+      const laborCost = driveHours * driverRate;
+      const maintCost = dist * maintRate;
+      const totalCost = fuelCost + laborCost + maintCost + tolls;
+      const costPerMile = dist > 0 ? (totalCost / dist) : 0;
+      const quote = marginPct < 1 ? totalCost / (1 - marginPct) : totalCost;
+      const quotePerMile = dist > 0 ? (quote / dist) : 0;
+
+      document.getElementById('jcFuelCost').textContent = `$${fuelCost.toFixed(2)}`;
+      document.getElementById('jcLaborCost').textContent = `$${laborCost.toFixed(2)}`;
+      document.getElementById('jcMaintCost').textContent = `$${maintCost.toFixed(2)}`;
+      document.getElementById('jcFeesCost').textContent = `$${tolls.toFixed(2)}`;
+      document.getElementById('jcTotalCost').textContent = `$${totalCost.toFixed(2)}`;
+      document.getElementById('jcCostPerMile').textContent = `$${costPerMile.toFixed(2)}/mi`;
+      document.getElementById('jcSuggestedQuote').textContent = `$${quote.toFixed(2)}`;
+      document.getElementById('jcQuotePerMile').textContent = `$${quotePerMile.toFixed(2)}/mi`;
+    }
+
+    ['jcDistance','jcFuelPrice','jcLoadedPct','jcDriverRate','jcAvgSpeed','jcLoadedMpg','jcEmptyMpg','jcTolls','jcMaintReserve','jcTargetMargin'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calcJobCost);
+    });
+
+    // DOT & COMPLIANCE
+    function renderDot() {
+      const list = document.getElementById('dotList');
+      document.getElementById('dotCount').textContent = `${state.dotItems.length} items`;
+      list.innerHTML = '';
+
+      if(!state.dotItems.length){
+        list.innerHTML = '<div class="empty">No DOT / compliance items tracked yet.</div>';
+        return;
+      }
+
+      const now = new Date();
+      state.dotItems.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'doc-row';
+        const due = item.dueDate ? new Date(item.dueDate) : null;
+        let expClass = 'doc-exp';
+        let statusLabel = item.dueDate || 'No date';
+        if(due){
+          const diffDays = Math.ceil((due - now) / (1000*60*60*24));
+          if(diffDays < 0){ expClass += ' past'; statusLabel += ' (OVERDUE)'; }
+          else if(diffDays <= 30){ expClass += ' soon'; statusLabel += ` (Due in ${diffDays}d)`; }
+        }
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:600">${item.title}</div>
+            <div style="font-size:12px; color:var(--text-dim);">${item.category} ${item.notes ? '· ' + item.notes : ''}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="${expClass}">${statusLabel}</span>
+            <span class="task-del" onclick="removeDot(${index})">✕</span>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+      renderOverview();
+    }
+
+    document.getElementById('dotAddBtn').onclick = () => {
+      const title = document.getElementById('dotTitle').value.trim();
+      if(!title) return;
+      state.dotItems.push({
+        title,
+        category: document.getElementById('dotCategory').value,
+        dueDate: document.getElementById('dotDueDate').value,
+        notes: document.getElementById('dotNotes').value.trim()
+      });
+      document.getElementById('dotTitle').value = '';
+      document.getElementById('dotNotes').value = '';
+      renderDot();
+    };
+
+    function removeDot(idx) {
+      state.dotItems.splice(idx, 1);
+      renderDot();
+    }
+
+    // GARAGE PROJECTS
+    function renderProjects() {
+      const colContainer = document.getElementById('projectColumns');
+      document.getElementById('projectCount').textContent = `${state.projects.length} builds`;
+      colContainer.innerHTML = '';
+
+      const statuses = ['Planning', 'In Progress', 'Waiting on Parts', 'Completed'];
+      statuses.forEach(status => {
+        const col = document.createElement('div');
+        col.className = 'panel';
+        col.style.background = 'var(--panel-2)';
+        const statusItems = state.projects.filter(i => i.status === status);
+        col.innerHTML = `
+          <div class="panel-head">
+            <div class="panel-title">${status}</div>
+            <div class="count-pill">${statusItems.length}</div>
+          </div>
+          <div class="proj-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        `;
+        const listEl = col.querySelector('.proj-list');
+        if(!statusItems.length){
+          listEl.innerHTML = '<div class="empty">None</div>';
+        }
+        statusItems.forEach((p) => {
+          const card = document.createElement('div');
+          card.className = 'task';
+          card.style.flexDirection = 'column';
+          card.style.alignItems = 'flex-start';
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+              <strong style="font-size:14px; color:var(--text);">${p.title}</strong>
+              <div class="task-del" onclick="removeProject('${p.id}')">✕</div>
+            </div>
+            ${p.nextStep ? `<div style="font-size:12px; color:var(--green-bright); margin-top:4px;"><strong>Next:</strong> ${p.nextStep}</div>` : ''}
+            ${p.partsNeeded ? `<div style="font-size:11.5px; color:var(--text-dim); margin-top:2px;"><strong>Parts:</strong> ${p.partsNeeded}</div>` : ''}
+          `;
+          listEl.appendChild(card);
+        });
+        colContainer.appendChild(col);
+      });
+    }
+
+    document.getElementById('projAddBtn').onclick = () => {
+      const title = document.getElementById('projTitle').value.trim();
+      if(!title) return;
+      state.projects.push({
+        id: Date.now().toString(),
+        title,
+        status: document.getElementById('projStatus').value,
+        nextStep: document.getElementById('projNextStep').value.trim(),
+        partsNeeded: document.getElementById('projPartsNeeded').value.trim()
+      });
+      document.getElementById('projTitle').value = '';
+      document.getElementById('projNextStep').value = '';
+      document.getElementById('projPartsNeeded').value = '';
+      renderProjects();
+    };
+
+    function removeProject(id) {
+      state.projects = state.projects.filter(p => p.id !== id);
+      renderProjects();
+    }
+
+    // MOTORCYCLE MAINTENANCE
+    document.getElementById('mcPreset').addEventListener('change', (e) => {
+      if(e.target.value !== 'Custom') document.getElementById('mcTitle').value = e.target.value;
+    });
+
+    function renderMcMaint() {
+      const list = document.getElementById('mcList');
+      document.getElementById('mcMaintCount').textContent = `${state.mcMaint.length} records`;
+      list.innerHTML = '';
+
+      if(!state.mcMaint.length){
+        list.innerHTML = '<div class="empty">No motorcycle maintenance recorded yet.</div>';
+        return;
+      }
+
+      state.mcMaint.forEach((m, idx) => {
+        const card = document.createElement('div');
+        card.className = 'task';
+        const costStr = m.cost ? ` · $${parseFloat(m.cost).toFixed(2)}` : '';
+        card.innerHTML = `
+          <div class="task-text">
+            <div style="font-weight:600; color:var(--text);">${m.title} <span class="maint-tag">${m.bike || 'Moto'}</span></div>
+            <div style="font-size:11.5px; color:var(--text-faint); margin-top:2px;">
+              ${m.odometer ? m.odometer + ' mi · ' : ''}${m.date || ''}${costStr}
+            </div>
+            ${m.notes ? `<div style="font-size:12px; color:var(--text-dim); margin-top:2px;">${m.notes}</div>` : ''}
+          </div>
+          <div class="task-del" onclick="removeMcMaint(${idx})">✕</div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    document.getElementById('mcAddBtn').onclick = () => {
+      const title = document.getElementById('mcTitle').value.trim();
+      if(!title) return;
+      state.mcMaint.push({
+        bike: document.getElementById('mcBike').value.trim(),
+        title,
+        odometer: document.getElementById('mcOdo').value ? parseInt(document.getElementById('mcOdo').value) : null,
+        date: document.getElementById('mcDate').value || new Date().toISOString().split('T')[0],
+        cost: document.getElementById('mcCost').value ? parseFloat(document.getElementById('mcCost').value) : null,
+        notes: document.getElementById('mcNotes').value.trim()
+      });
+      document.getElementById('mcTitle').value = '';
+      document.getElementById('mcNotes').value = '';
+      renderMcMaint();
+    };
+
+    function removeMcMaint(idx) {
+      state.mcMaint.splice(idx, 1);
+      renderMcMaint();
+    }
+
+    // VET HOSPITAL
+    function renderVet() {
+      const list = document.getElementById('vetTasksList');
+      const doneCount = state.vetTasks.filter(i => i.done).length;
+      const pct = state.vetTasks.length ? Math.round((doneCount / state.vetTasks.length) * 100) : 0;
+      document.getElementById('vetProgress').textContent = `${pct}% completed (${doneCount}/${state.vetTasks.length})`;
+      list.innerHTML = '';
+
+      state.vetTasks.forEach((t, idx) => {
+        const card = document.createElement('div');
+        card.className = 'task' + (t.done ? ' done' : '');
+        card.innerHTML = `
+          <div class="checkbox ${t.done ? 'on' : ''}" onclick="toggleVet(${idx})">${t.done ? '✓' : ''}</div>
+          <div class="task-text">
+            <strong style="color:var(--text);">${t.task}</strong>
+            <span class="maint-tag">${t.category}</span>
+            <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
+              ${t.owner ? 'Owner: ' + t.owner + ' · ' : ''}${t.targetDate ? 'Target: ' + t.targetDate : ''}
+            </div>
+          </div>
+          <div class="task-del" onclick="removeVet(${idx})">✕</div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    document.getElementById('vetAddBtn').onclick = () => {
+      const task = document.getElementById('vetTask').value.trim();
+      if(!task) return;
+      state.vetTasks.push({
+        category: document.getElementById('vetCategory').value,
+        task,
+        owner: document.getElementById('vetOwner').value.trim(),
+        targetDate: document.getElementById('vetTargetDate').value,
+        done: false
+      });
+      document.getElementById('vetTask').value = '';
+      renderVet();
+    };
+
+    function toggleVet(idx) { state.vetTasks[idx].done = !state.vetTasks[idx].done; renderVet(); }
+    function removeVet(idx) { state.vetTasks.splice(idx, 1); renderVet(); }
+
+    // SHARED SHOPPING LIST
+    function renderShopping() {
+      const list = document.getElementById('shoppingList');
+      const openCount = state.shopping.filter(i => !i.done).length;
+      document.getElementById('shoppingCount').textContent = `${openCount} open items`;
+      list.innerHTML = '';
+
+      state.shopping.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'task' + (item.done ? ' done' : '');
+        card.innerHTML = `
+          <div class="checkbox ${item.done ? 'on' : ''}" onclick="toggleShopping(${idx})">${item.done ? '✓' : ''}</div>
+          <div class="task-text">
+            <span style="font-weight:600; color:var(--text);">${item.item}</span>
+            <span class="maint-tag">${item.store}</span>
+            ${item.notes ? `<span style="font-size:12px; color:var(--text-dim); margin-left:8px;">(${item.notes})</span>` : ''}
+          </div>
+          <div class="task-del" onclick="removeShopping(${idx})">✕</div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    document.getElementById('shopAddBtn').onclick = () => {
+      const item = document.getElementById('shopItem').value.trim();
+      if(!item) return;
+      state.shopping.push({
+        item,
+        store: document.getElementById('shopStore').value,
+        notes: document.getElementById('shopNotes').value.trim(),
+        done: false
+      });
+      document.getElementById('shopItem').value = '';
+      document.getElementById('shopNotes').value = '';
+      renderShopping();
+    };
+
+    function toggleShopping(idx) { state.shopping[idx].done = !state.shopping[idx].done; renderShopping(); }
+    function removeShopping(idx) { state.shopping.splice(idx, 1); renderShopping(); }
+
+    // WOODWORKING CALCULATOR
+    function calcWoodTotals() {
+      const priceUnit = parseFloat(document.getElementById('woodBoardFootCost').value) || 0;
+      let totalBf = 0;
+
+      state.woodParts.forEach(p => {
+        const bf = ((p.thick * p.width * p.length) / 144) * p.qty;
+        totalBf += bf;
+      });
+
+      const wasteBf = totalBf * 1.15;
+      const cost = wasteBf * priceUnit;
+
+      document.getElementById('woodTotalBF').textContent = `${totalBf.toFixed(2)} BF`;
+      document.getElementById('woodWasteBF').textContent = `${wasteBf.toFixed(2)} BF`;
+      document.getElementById('woodEstCost').textContent = `$${cost.toFixed(2)}`;
+    }
+
+    function renderWoodParts() {
+      const list = document.getElementById('woodPartsList');
+      list.innerHTML = '';
+
+      if(!state.woodParts.length){
+        list.innerHTML = '<div class="empty">No project parts added yet.</div>';
+        calcWoodTotals();
+        return;
+      }
+
+      state.woodParts.forEach((p, idx) => {
+        const bf = ((p.thick * p.width * p.length) / 144) * p.qty;
+        const card = document.createElement('div');
+        card.className = 'task';
+        card.innerHTML = `
+          <div class="task-text">
+            <strong style="color:var(--text);">${p.name}</strong> (${p.qty}x) — ${p.thick}" × ${p.width}" × ${p.length}"
+            <span style="font-size:11px; color:var(--amber); margin-left:8px;">${bf.toFixed(2)} BF</span>
+          </div>
+          <div class="task-del" onclick="removeWoodPart(${idx})">✕</div>
+        `;
+        list.appendChild(card);
+      });
+      calcWoodTotals();
+    }
+
+    document.getElementById('woodAddPartBtn').onclick = () => {
+      const name = document.getElementById('woodPartName').value.trim();
+      const qty = parseInt(document.getElementById('woodPartQty').value) || 1;
+      const thick = parseFloat(document.getElementById('woodPartThick').value) || 1;
+      const width = parseFloat(document.getElementById('woodPartWidth').value) || 1;
+      const length = parseFloat(document.getElementById('woodPartLength').value) || 1;
+
+      if(!name) return;
+      state.woodParts.push({ name, qty, thick, width, length });
+      document.getElementById('woodPartName').value = '';
+      renderWoodParts();
+    };
+
+    function removeWoodPart(idx) {
+      state.woodParts.splice(idx, 1);
+      renderWoodParts();
+    }
+    document.getElementById('woodBoardFootCost').addEventListener('input', calcWoodTotals);
+
+    // GLOBAL SEARCH OVERLAY
+    const searchOverlay = document.getElementById('searchOverlay');
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const globalSearchList = document.getElementById('globalSearchList');
+
+    function openGlobalSearch(){
+      searchOverlay.classList.add('open');
+      globalSearchInput.value = '';
+      renderGlobalSearch('');
+      setTimeout(() => globalSearchInput.focus(), 10);
+    }
+    function closeGlobalSearch(){ searchOverlay.classList.remove('open'); }
+
+    document.getElementById('globalSearchBtn').onclick = openGlobalSearch;
+    searchOverlay.addEventListener('click', e => { if(e.target === searchOverlay) closeGlobalSearch(); });
+
+    document.addEventListener('keydown', e => {
+      if((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f'){
+        e.preventDefault();
+        searchOverlay.classList.contains('open') ? closeGlobalSearch() : openGlobalSearch();
+      }
+    });
+
+    function renderGlobalSearch(q) {
+      const term = q.trim().toLowerCase();
+      globalSearchList.innerHTML = '';
+      if(!term){
+        globalSearchList.innerHTML = '<div class="cmdk-item">Type to search across tasks, docs, projects, maintenance, shopping...</div>';
+        return;
+      }
+
+      const results = [];
+      state.tasks.forEach(t => { if(t.text.toLowerCase().includes(term)) results.push({ type:'Task', text: t.text, tab:'tasks' }); });
+      state.dotItems.forEach(d => { if(d.title.toLowerCase().includes(term)) results.push({ type:'DOT / Compliance', text: `${d.title} [${d.category}]`, tab:'dot' }); });
+      state.projects.forEach(p => { if(p.title.toLowerCase().includes(term)) results.push({ type:'Garage Project', text: `${p.title} (${p.status})`, tab:'projects' }); });
+      state.mcMaint.forEach(m => { if(m.title.toLowerCase().includes(term)) results.push({ type:'Moto Maint', text: `${m.title} (${m.bike})`, tab:'mcmaint' }); });
+      state.vetTasks.forEach(v => { if(v.task.toLowerCase().includes(term)) results.push({ type:'Vet Hospital', text: `${v.task}`, tab:'vethospital' }); });
+      state.shopping.forEach(s => { if(s.item.toLowerCase().includes(term)) results.push({ type:'Shopping', text: `${s.item} (${s.store})`, tab:'shopping' }); });
+
+      if(!results.length){
+        globalSearchList.innerHTML = '<div class="cmdk-item">No matching records found</div>';
+        return;
+      }
+
+      results.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'cmdk-item';
+        item.innerHTML = `<span>${r.text}</span><span class="count-pill">${r.type}</span>`;
+        item.onclick = () => {
+          goToTab(r.tab);
+          closeGlobalSearch();
+        };
+        globalSearchList.appendChild(item);
+      });
+    }
+
+    globalSearchInput.addEventListener('input', () => renderGlobalSearch(globalSearchInput.value));
+
+    // INITIALIZATION
+    function init() {
+      renderTabPinning();
+      calcJobCost();
+      renderDot();
+      renderProjects();
+      renderMcMaint();
+      renderVet();
+      renderShopping();
+      renderWoodParts();
+      renderOverview();
+    }
+
+    init();
+  </script>
+</body>
+</html>

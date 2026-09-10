@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shopping List</title><style>
+:root{--bg:#070b13;--side:#0a1220;--panel:#101b2d;--panel2:#15243a;--line:#273d5d;--txt:#edf5ff;--muted:#91a7c4;--accent:#45d5a5;--blue:#62aefa;--red:#ff6c7a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+.shell{min-height:100vh;display:grid;grid-template-columns:248px 1fr}
+.sidebar{background:linear-gradient(180deg,#091322,#080e18);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 16px;border-bottom:1px solid var(--line)}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center;font-size:20px}
+.brand b{display:block;font-size:16px}.brand small{color:var(--muted);font-size:11px}
+.nav-label{font-size:10px;font-weight:800;letter-spacing:.12em;color:#7188a6;padding:0 9px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{border:1px solid transparent;border-radius:9px;background:transparent;color:#b9cbe2;text-align:left;padding:10px 11px;font:inherit;cursor:pointer}
+.nav button:hover,.nav button.active{background:#182b46;color:#fff;border-color:#2c4b70}
+.side-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:15px}
+.side-note{padding:0 8px;color:var(--muted);font-size:11px}
+.main{min-width:0;padding:28px 32px 40px}
+.topbar{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:25px;flex-wrap:wrap}
+.topbar h1{margin:0;font-size:25px}.topbar p{margin:3px 0 0;color:var(--muted)}
+.buttons{display:flex;gap:9px;flex-wrap:wrap}
+.btn{border:1px solid #365575;border-radius:9px;background:#18304d;color:#eaf4ff;padding:9px 12px;font:inherit;font-weight:700;cursor:pointer}
+.btn:hover{filter:brightness(1.15)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#062218}
+.btn.warn{background:#3c1d2a;border-color:#7c3347;color:#ffd7dc}
+.toolbar,.stat,.list-wrap{border:1px solid var(--line);background:var(--panel);border-radius:13px}
+.toolbar{display:flex;gap:10px;padding:12px;margin-bottom:17px;flex-wrap:wrap}
+.toolbar form{display:flex;gap:10px;flex:1;flex-wrap:wrap}
+.toolbar input[type=text]{flex:2;min-width:160px}
+.toolbar input[type=number]{width:90px}
+input,select,textarea{background:#081323;border:1px solid #2b4668;border-radius:8px;color:var(--txt);padding:9px 10px;font:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #62aefa20}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px}
+.stat{padding:14px}.stat span{display:block;font-size:12px;color:var(--muted)}.stat strong{display:block;margin-top:3px;font-size:27px}
+.list-wrap{padding:8px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-bottom:1px solid #1c2c44}
+.item:last-child{border-bottom:none}
+.item input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex:0 0 auto}
+.item .name{flex:1;font-size:15px}
+.item .qty{color:var(--muted);font-size:12px;flex:0 0 auto}
+.item.checked .name{text-decoration:line-through;color:#5f7592}
+.item.checked{background:#0d1826}
+.item .del{background:none;border:none;color:#6d84a4;cursor:pointer;font-size:16px;flex:0 0 auto}
+.item .del:hover{color:var(--red)}
+.empty{text-align:center;padding:50px;color:var(--muted)}
+.modal{display:none;position:fixed;inset:0;z-index:10;padding:16px;background:#020713d0;place-items:center}
+.modal.open{display:grid}
+.dialog{width:min(560px,100%);max-height:88vh;overflow:auto;background:#101e33;border:1px solid #385a7c;border-radius:15px;padding:22px;box-shadow:0 22px 60px #0009}
+.dialog h2{margin:0 0 6px}
+.dialog p.sub{margin:0 0 16px;color:var(--muted);font-size:13px}
+.review-item{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #1c2c44;font-size:14px}
+.review-item .mark{width:18px;flex:0 0 auto;font-weight:800}
+.review-item.checked .mark{color:var(--accent)}
+.review-item.unchecked .mark{color:var(--red)}
+.review-item.checked .txt{text-decoration:line-through;color:#5f7592}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.warn-box{background:#3c2a12;border:1px solid #7c5a23;color:#ffd79b;border-radius:9px;padding:10px 12px;font-size:13px;margin-top:12px}
+@media(max-width:860px){.shell{grid-template-columns:1fr}.sidebar{position:static;height:auto}.main{padding:20px}.stats{grid-template-columns:repeat(2,1fr)}.topbar{align-items:flex-start;flex-direction:column}}
+</style></head><body><div class="shell"><aside class="sidebar"><div class="brand"><div class="logo">🛒</div><div><b>Shopping List</b><small>Check it off, don't lose it</small></div></div><div><div class="nav-label">VIEW</div><nav class="nav"><button class="active" id="viewAll">☰ &nbsp; Full list</button><button id="viewRemaining">◻ &nbsp; Still need</button><button id="viewChecked">✓ &nbsp; In the cart</button></nav></div><div class="side-bottom"><p class="side-note">Checking an item off draws a line through it — it stays on the list until you delete it or start a new trip.<br><br>Hit "Done shopping" and you'll get a final list to re-check before you leave.</p></div></aside><main class="main"><header class="topbar"><div><h1>Shopping List</h1><p id="subtitle">Add what you need, check it off as you grab it.</p></div><div class="buttons"><button class="btn" id="newTrip">Start new trip</button><button class="btn primary" id="doneShopping">✅ Done shopping</button></div></header><section class="toolbar"><form id="addForm"><input type="text" id="itemName" placeholder="Item (e.g. Milk, 2% gallon)" required><input type="number" id="itemQty" placeholder="Qty" min="1"><button class="btn primary" type="submit">Add</button></form></section><section class="stats"><div class="stat"><span>Total items</span><strong id="total">0</strong></div><div class="stat"><span>Still need</span><strong id="remaining">0</strong></div><div class="stat"><span>In the cart</span><strong id="gotCount">0</strong></div></section><section class="list-wrap" id="listWrap"></section></main></div>
+
+<div class="modal" id="reviewModal"><div class="dialog"><h2>Before you head out...</h2><p class="sub">Look over the whole list one more time. Confirm everything checked is really in the cart, and nothing unchecked got missed.</p><div id="reviewList"></div><div class="warn-box" id="reviewWarning" style="display:none"></div><div class="dialog-actions"><button type="button" class="btn" id="backToList">Back to list</button><button type="button" class="btn primary" id="confirmDone">Yes, I've double-checked everything</button></div></div></div>
+
+<script>
+const K='shoppinglist-v1',$=id=>document.getElementById(id);
+let items=JSON.parse(localStorage.getItem(K)||'[]'),view='all';
+function save(){localStorage.setItem(K,JSON.stringify(items));render()}
+function esc(x=''){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function newid(){return 'it-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+function visible(){
+  if(view==='remaining') return items.filter(i=>!i.checked);
+  if(view==='checked') return items.filter(i=>i.checked);
+  return items;
+}
+
+function render(){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  ({all:$('viewAll'),remaining:$('viewRemaining'),checked:$('viewChecked')}[view]).classList.add('active');
+
+  $('total').textContent=items.length;
+  $('remaining').textContent=items.filter(i=>!i.checked).length;
+  $('gotCount').textContent=items.filter(i=>i.checked).length;
+
+  let a=visible();
+  $('listWrap').innerHTML=a.length?a.map(i=>`
+    <div class="item ${i.checked?'checked':''}">
+      <input type="checkbox" ${i.checked?'checked':''} onchange="toggleItem('${i.id}')">
+      <span class="name">${esc(i.name)}</span>
+      ${i.qty?`<span class="qty">x${esc(i.qty)}</span>`:''}
+      <button class="del" title="Remove from list" onclick="delItem('${i.id}')">✕</button>
+    </div>`).join(''):
+    '<div class="empty">Nothing here yet — add an item above.</div>';
+}
+
+window.toggleItem=id=>{let i=items.find(i=>i.id===id); if(i){i.checked=!i.checked; save()}};
+window.delItem=id=>{if(confirm('Remove this item from the list entirely?')){items=items.filter(i=>i.id!==id); save()}};
+
+$('addForm').onsubmit=e=>{
+  e.preventDefault();
+  let name=$('itemName').value.trim();
+  if(!name) return;
+  items.push({id:newid(), name, qty:$('itemQty').value.trim(), checked:false, created:Date.now()});
+  $('itemName').value=''; $('itemQty').value='';
+  $('itemName').focus();
+  save();
+};
+
+$('viewAll').onclick=()=>{view='all'; render()};
+$('viewRemaining').onclick=()=>{view='remaining'; render()};
+$('viewChecked').onclick=()=>{view='checked'; render()};
+
+$('newTrip').onclick=()=>{
+  if(!items.length) return;
+  if(confirm('Start a new trip? This will uncheck every item so the same list is ready to shop again (nothing gets deleted).')){
+    items.forEach(i=>i.checked=false);
+    save();
+  }
+};
+
+// ---- Done shopping: forced review before closing out ----
+$('doneShopping').onclick=()=>{
+  if(!items.length){ alert('Your list is empty — add some items first.'); return; }
+  let rows=items.map(i=>`<div class="review-item ${i.checked?'checked':'unchecked'}"><span class="mark">${i.checked?'✓':'!'}</span><span class="txt">${esc(i.name)}${i.qty?` (x${esc(i.qty)})`:''}</span></div>`).join('');
+  $('reviewList').innerHTML=rows;
+  let missed=items.filter(i=>!i.checked).length;
+  let warn=$('reviewWarning');
+  if(missed){
+    warn.style.display='block';
+    warn.textContent=`Heads up: ${missed} item${missed===1?'':'s'} on the list ${missed===1?'is':'are'} still unchecked. Go back and grab ${missed===1?'it':'them'}, or confirm you're skipping ${missed===1?'it':'them'} on purpose.`;
+  } else {
+    warn.style.display='none';
+  }
+  $('reviewModal').classList.add('open');
+};
+$('backToList').onclick=()=>$('reviewModal').classList.remove('open');
+$('confirmDone').onclick=()=>{
+  $('reviewModal').classList.remove('open');
+  alert('Trip confirmed. Use "Start new trip" when you\'re ready to shop this list again, or delete items you\'re fully done with.');
+};
+
+render();
+</script></body></html>
